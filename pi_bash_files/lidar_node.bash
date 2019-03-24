@@ -1,0 +1,1 @@
+lxterminal --command="/bin/bash -c 'source /opt/ros/kinetic/setup.bash; source ~/Desktop/pi_workspace/devel/setup.bash; export ROS_MASTER_URI=http://192.168.43.232:11311; export ROS_IP=192.168.43.232; roslaunch rplidar_ros view_slam.launch; read'"
