@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="alex_main_pkg" type="main_node" name="main_node" launch-prefix="xterm -e"/>
+    <node pkg="alex_main_pkg" type="cli" name="cli" launch-prefix="xterm -e"/>
+    <node pkg="alex_main_pkg" type="camera_node" name="camera_node" launch-prefix="xterm -e"/>
+    <include file="$(find rplidar_ros)/launch/view_slam.launch"/>
+</launch>
