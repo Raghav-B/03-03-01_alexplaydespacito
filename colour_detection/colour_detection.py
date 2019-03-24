@@ -19,7 +19,7 @@ while(1):
     g_blur = cv2.GaussianBlur(hsv, (5, 5), 0)
 
     mask = cv2.inRange(g_blur, lower_blue, upper_blue)
-    contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _, contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if len(contours):
         c = max(contours, key = cv2.contourArea)
