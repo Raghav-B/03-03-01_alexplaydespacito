@@ -9,7 +9,8 @@
   - **Setting up Alex's ROS package**
       - Navigate to your caktin workspace, in the `src` folder, go and clone this repository.
       - Open a new terminal here and run `chmod a+x -R 03-03-01_alexplaydespacito/*`.
-      - Enter this folder and edit `alex_startup.bash`. In lines 9 and 10, you want to change the IP in ROS_IP to your machine's current IP address. You have to ensure that you're connected to the same network as the Pi though.
+      - ***Skip this step if you do not intend to interface betwen two different machines.***                            
+      Enter this folder and edit `alex_startup.bash`. In lines 9 and 10, you want to change the IP in ROS_IP to your machine's current IP address. You have to ensure that you're connected to the same network as the Pi though.
       - `cd` back to the catkin workspace, one directory above the current `src` folder.
       - Open a terminal here and run `catkin_make`. Hopefully everything should compile properly.
   - **Running alex**
