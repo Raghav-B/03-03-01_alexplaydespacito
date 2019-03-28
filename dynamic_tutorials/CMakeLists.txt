@@ -118,11 +118,13 @@ catkin_package(
 ## Build ##
 ###########
 
+find_package(OpenCV)
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -205,7 +207,6 @@ include_directories(
 #add dynamic reconfigure api
 #find_package(catkin REQUIRED dynamic_reconfigure)
 # make sure configure headers are built before any node using them
-add_executable(server src/server.cpp)
-target_link_libraries(server ${catkin_LIBRARIES})
-add_dependencies(server ${PROJECT_NAME}_gencfg)
-
+add_executable(colour_detection src/colour_detection.cpp)
+target_link_libraries(colour_detection ${catkin_LIBRARIES} ${OpenCV_LIBS})
+add_dependencies(colour_detection ${PROJECT_NAME}_gencfg)

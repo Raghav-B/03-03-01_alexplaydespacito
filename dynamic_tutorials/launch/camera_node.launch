@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="dynamic_tutorials" type="colour_detection" name="colour_detection" output="screen"/>
+</launch>
