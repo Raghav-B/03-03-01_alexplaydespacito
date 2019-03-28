@@ -1,28 +1,55 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
+#include "alex_main_pkg/cli_messages.h"
 #include <iostream>
 #include <string>
+#include <vector>
+#include <sstream>
 
 int main(int argc, char**argv) {
     ros::init(argc, argv, "cli");
-    ros::NodeHandle n;
+    ros::NodeHandle cli_handle;
+    ros::ServiceClient cli_client = cli_handle.serviceClient<alex_main_pkg::cli_messages>("cli_command");
+    alex_main_pkg::cli_messages msg;
+    ROS_INFO("Command Line Node Started");
 
-    ros::Publisher cli_pub = n.advertise<std_msgs::String>("cli_keystrokes", 0);
-    
     ros::Rate loop_rate(10);
     while(ros::ok()) {
-        //char input[50];
-        //gets(input);
         std::string input;
-        //std::cin >> input;
         std::getline(std::cin, input);
+        std::string original_input = input;
 
-        ROS_INFO("Data sent: %s", input.c_str());
+        if (input != "P" && input != "p") {
+            std::vector<std::string> input_vector; std::string temp;
+            std::istringstream detoken(input);
+            while (std::getline(detoken, temp, ' ')) {
+                input_vector.push_back(temp);
+            }   
 
-        std_msgs::String msg;
-        msg.data = input;
+            // Sending input data in appropriate format
+            msg.request.action = input_vector[0];
+            msg.request.distance = std::stoi(input_vector[1]);
+            msg.request.speed = std::stoi(input_vector[2]);
+        } else {
+            msg.request.action = input;
+            msg.request.distance = 0;
+            msg.request.speed = 0;
+        }
+        // Performing some string manipulation to get the appropriate command format.
+        
+        
+        if (cli_client.call(msg)) {
+            //if (msg.response.result == "success") {
+            //    ROS_INFO("%s - Performed Successfully", original_input.c_str());
+            //} else {
+            //    ROS_ERROR("%s - Action Unsuccessful", original_input.c_str());
+            //}
+            ROS_INFO("%s", msg.response.result.c_str());
+        } else {
+            ROS_ERROR("Failed to contact main_node");
+        }
 
-        cli_pub.publish(msg);
+        //ROS_INFO("Data sent: %s", input.c_str());
 
         ros::spinOnce();
         loop_rate.sleep();

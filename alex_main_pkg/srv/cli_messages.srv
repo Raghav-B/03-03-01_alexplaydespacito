@@ -1,0 +1,5 @@
+string action
+int16 distance
+int16 speed
+---
+string result

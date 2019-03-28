@@ -6,5 +6,5 @@
 <launch>
   <include file="$(find rplidar_ros)/launch/rplidar.launch" />
   <include file="$(find rplidar_ros)/launch/hectormapping.launch" />
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rplidar_ros)/rviz/slam.rviz" />
+  <!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find rplidar_ros)/rviz/slam.rviz" />-->
 </launch>
