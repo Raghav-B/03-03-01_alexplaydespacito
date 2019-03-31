@@ -1,4 +1,4 @@
-string action
+char action
 int16 distance
 int16 speed
 ---
