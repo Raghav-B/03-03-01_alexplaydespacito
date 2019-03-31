@@ -41,6 +41,7 @@ volatile unsigned long reverseDist;
 volatile unsigned long deltaDist;
 volatile unsigned long deltaTicks,targetTicks;
 volatile unsigned long newDist;
+
 TResult readPacket(TPacket *packet)
 {
     char buffer[PACKET_SIZE];
@@ -51,6 +52,7 @@ TResult readPacket(TPacket *packet)
     else
       return deserialize(buffer, len, packet); 
 }
+
 void sendStatus()
 {
   TPacket statusPacket;
@@ -169,6 +171,7 @@ void leftISR(){
      rightPICount = leftPICount = 0;
    }
 }
+
 void rightISR(){
   rightPICount++;
   if (dir == FORWARD)
@@ -189,6 +192,7 @@ void rightISR(){
    }
 
 }
+
 void setupEINT(){
   EICRA = 0b00001010; EIMSK = 0b00000011;
 }
@@ -440,8 +444,6 @@ void waitForHello()
     {
       if(hello.packetType == PACKET_TYPE_HELLO)
       {
-     
-
         sendOK();
         exit=1;
       }

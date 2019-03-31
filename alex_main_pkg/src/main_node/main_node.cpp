@@ -9,31 +9,37 @@ bool execute_cli_command(alex_main_pkg::cli_messages::Request &req, alex_main_pk
     int16_t distance = req.distance;
     int16_t speed = req.speed;
 
-    if (command == "W" || command == "w") { // Forward movement
+    if (command == 'W') { // Forward movement
         ROS_INFO("Moving Forward");
         std::string temp = "Success - Forward by " + std::to_string(distance) + " at speed " + std::to_string(speed);
         res.result = temp;
         // Add errors here as well as need be.
 
-    } else if (command == "S" || command == "s") { // Backward movement
+    } else if (command == 'S') { // Backward movement
         ROS_INFO("Moving Back");
         std::string temp = "Success - Backward by " + std::to_string(distance) + " at speed " + std::to_string(speed);
         res.result = temp;
         // Add errors here as well as need be.
 
-    } else if (command == "A" || command == "a") { // Left turn
+    } else if (command == 'A') { // Left turn
         ROS_INFO("Turning Left");
         std::string temp = "Success - Left by " + std::to_string(distance) + " at speed " + std::to_string(speed);
         res.result = temp;
         // Add errors here as well as need be.
 
-    } else if (command == "D" || command == "d") { // Right turn
+    } else if (command == 'D') { // Right turn
         ROS_INFO("Turning Right");
         std::string temp = "Success - Right by " + std::to_string(distance) + " at speed " + std::to_string(speed);
         res.result = temp;
         // Add errors here as well as need be.
 
-    } else if (command == "P" || command == "p") { // Take photo
+    } else if (command == 'X') { // Halt
+        ROS_INFO("Stopping");
+        std::string temp = "Success - Stopped"
+        res.result = temp;
+        // Add errors here as well as need be.
+    
+    } else if (command == 'P') { // Take photo
         ros::NodeHandle camera_command_handle;
         ros::ServiceClient client = camera_command_handle.serviceClient<alex_main_pkg::camera>("take_photo");
         alex_main_pkg::camera msg;

@@ -19,7 +19,7 @@ bool parse_command (const std::string &input, alex_main_pkg::cli_messages &msg) 
   char validCmds[] = {'P', 'W', 'A', 'S', 'D', 'X'};
   bool isValid = false;
   std::istringstream detoken(input);
-  std::string temp; int dist, speed; char command;
+  std::string temp; unsigned int dist, speed; char command;
   input >> temp;
   if (temp.size() != 1) return false;
   command = toupper(temp[0]); //extract first character and capitalise
@@ -45,7 +45,6 @@ bool parse_command (const std::string &input, alex_main_pkg::cli_messages &msg) 
   }
 }
 
-
 int main(int argc, char **argv) {
   ros::init(argc, argv, "cli");
   ros::NodeHandle cli_handle;
@@ -60,10 +59,8 @@ int main(int argc, char **argv) {
     std::string original_input = input;
     if (!parse_command(input, msg)) {
       //TODO invalid command, feedback to user
-      std::cout << "Invalid command.\n";
-    }
-
-    if (cli_client.call(msg)) {
+      ROS_ERROR("Invalid command.");
+    } else if (cli_client.call(msg)) {
       //if (msg.response.result == "success") {
       //    ROS_INFO("%s - Performed Successfully", original_input.c_str());
       //} else {
@@ -73,9 +70,7 @@ int main(int argc, char **argv) {
     } else {
       ROS_ERROR("Failed to contact main_node");
     }
-
     //ROS_INFO("Data sent: %s", input.c_str());
-
     ros::spinOnce();
     loop_rate.sleep();
   }
