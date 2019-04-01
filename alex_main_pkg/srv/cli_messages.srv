@@ -1,5 +1,5 @@
 char action
-uint16 distance
-uint16 speed
+uint32 distance
+uint32 speed
 ---
 string result

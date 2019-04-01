@@ -16,10 +16,10 @@
  * accordingly).
  */
 bool parse_command (const std::string &input, alex_main_pkg::cli_messages &msg) {
-  char validCmds[] = {'P', 'W', 'A', 'S', 'D', 'X'};
+  char validCmds[] = {'P', 'W', 'A', 'S', 'D', 'X', 'G', 'C', 'Q'};
   bool isValid = false;
   std::istringstream detoken(input);
-  std::string temp; unsigned int dist, speed; char command;
+  std::string temp; uint16_t dist, speed; char command;
   input >> temp;
   if (temp.size() != 1) return false;
   command = toupper(temp[0]); //extract first character and capitalise
@@ -30,7 +30,8 @@ bool parse_command (const std::string &input, alex_main_pkg::cli_messages &msg) 
     }
   }
   if (!isValid) return false;
-  if (command == 'P' || command == 'X') {
+  if (command == 'P' || command == 'X' || command = 'G' || command == 'C' ||
+    command == 'Q') {
     msg.request.action = command;
     msg.request.distance = 0;
     msg.request.speed = 0;
@@ -50,7 +51,7 @@ int main(int argc, char **argv) {
   ros::NodeHandle cli_handle;
   ros::ServiceClient cli_client = cli_handle.serviceClient<alex_main_pkg::cli_messages>("cli_command");
   alex_main_pkg::cli_messages msg;
-  ROS_INFO("Command Line Node Started");
+  ROS_INFO("Command line node started.");
 
   ros::Rate loop_rate(10);
   while(ros::ok()) {
@@ -68,7 +69,7 @@ int main(int argc, char **argv) {
       //}
       ROS_INFO("%s", msg.response.result.c_str());
     } else {
-      ROS_ERROR("Failed to contact main_node");
+      ROS_ERROR("Failed to contact main node.");
     }
     //ROS_INFO("Data sent: %s", input.c_str());
     ros::spinOnce();
