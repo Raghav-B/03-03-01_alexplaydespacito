@@ -1,8 +1,12 @@
 #include<stdio.h>
 #include<vector>
 #include<opencv2/opencv.hpp>
+#include<string>
+#include<iostream>
 
+using namespace std;
 int main() {
+
     // red hsv values
     cv::Scalar lower_red = cv::Scalar(100, 60, 60);
     cv::Scalar higher_red = cv::Scalar(110, 255, 255);
@@ -14,70 +18,103 @@ int main() {
     // area has to greater than the threshold to be detected 
     long area_threshold = 1000;
 
-    // initialized the camaera
-    cv::VideoCapture cap(0);
+    std::system("fswebcam -r 640x480 --jpeg 85 -D 0 photo.jpeg");
 
-    // check whether the camera is successfully initialized
-    if (!cap.isOpened()) {
+    // image name
+    std::string imageName("photo.jpeg"); 
 
-        return -1;
+    // frames are stored in type MAT
+    cv::Mat frame, hsv, blur, mask;
 
-    } else {
+    // read the image frame
+    frame = cv::imread(imageName, cv::IMREAD_COLOR);
 
-        // frames are stored in type MAT
-        cv::Mat frame, hsv, blur, mask;
+    // convert the frame from bgr to hsv
+    cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);
 
-        while(1) {
+    // blur tiny pixels to the surrounding pixels
+    cv::GaussianBlur(hsv, blur, cv::Size(5, 5), 0, 0);
 
-            // read the video frame
-            cap >> frame;
+    // flag to check for presence of color
+    bool red_found = false, blue_found = false;
 
-            // convert the frame from bgr to hsv
-            cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);
+    // get pixels within pixel ranges
+    cv::inRange(blur, lower_red, higher_red, mask);
 
-            // blur tiny pixels to the surrounding pixels
-            cv::GaussianBlur(hsv, blur, cv::Size(5, 5), 0, 0);
+    // find the largest contour
+    std::vector<std::vector<cv::Point>> contours;
+    std::vector<cv::Vec4i> hierarchy;
+    cv::findContours(mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    long largest_area_red = 0;
+    long largest_contour_red_index = 0;
 
-            // get pixels within pixel ranges
-            cv::inRange(blur, lower_red, higher_red, mask);
+    // check for existing of contors before finding the largest
+    if (contours.size()) {
 
-            // find the largest contour
-            std::vector<std::vector<cv::Point>> contours;
-            std::vector<cv::Vec4i> hierarchy;
-            cv::findContours(mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
-            long largest_area = 0;
-            long largest_contour_index = 0;
-
-            // check for existing of contors before finding the largest
-            if (contours.size()) {
-
-                // get the largest contour based on area
-                for(long i = 0; i< contours.size(); i++) {
-                    long area = cv::contourArea(contours[i], false);  
-                    if (area > largest_area) {
-                        largest_area = area;
-                        largest_contour_index = i;      
-                    }
-
-                }
-
-                // draw the largest contour if the contour area is greater than threshold
-                if (largest_area > area_threshold) {
-                    cv::Scalar color = cv::Scalar(0, 255, 0);
-                    cv::drawContours(frame, contours, largest_contour_index, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
-                }
-            }
-
-            // draw the frame with the contour and the mask
-            cv::imshow("frame", frame);
-            cv::imshow("mask", mask);
-
-            // exit when ESC is pressed
-            if (cv::waitKey(30) >= 0) {
-                break;
+        // get the largest contour based on area
+        for(long i = 0; i< contours.size(); i++) {
+            long area = cv::contourArea(contours[i], false);  
+            if (area > largest_area_red) {
+                largest_area_red = area;
+                largest_contour_red_index = i;      
             }
 
         }
+
+        // draw the largest contour if the contour area is greater than threshold
+        if (largest_area_red > area_threshold) {
+            cv::Scalar color = cv::Scalar(0, 255, 0);
+            cv::drawContours(frame, contours, largest_contour_red_index, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
+            red_found = true;
+        }
     }
+
+    // get pixels within pixel ranges
+    cv::inRange(blur, lower_blue, higher_blue, mask);
+
+    // find the largest contour
+    cv::findContours(mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    long largest_area_blue = 0;
+    long largest_contour_blue_index = 0;
+
+    // check for existing of contors before finding the largest
+    if (contours.size()) {
+
+        // get the largest contour based on area
+        for(long i = 0; i< contours.size(); i++) {
+            long area = cv::contourArea(contours[i], false);  
+            if (area > largest_area_blue) {
+                largest_area_blue = area;
+                largest_contour_blue_index = i;      
+            }
+
+        }
+
+        // draw the largest contour if the contour area is greater than threshold
+        if (largest_area_blue > area_threshold) {
+            cv::Scalar color = cv::Scalar(0, 255, 0);
+            cv::drawContours(frame, contours, largest_contour_blue_index, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
+            blue_found = true;
+        }
+    }
+
+    // draw the frame with the contour and the mask for debugging
+    /*
+    imwrite(imageName, frame);
+    cv::imshow("frame", frame);
+    cv::waitKey(0);
+    */
+    if (blue_found) {
+        std::cout << "Blue found" << std::endl;
+    } else {
+        std::cout << "Blue not found" << std::endl;
+    }
+
+    if (red_found) {
+        std::cout << "Red found" << std::endl;
+    } else {
+        std::cout << "Red not found" << std::endl;
+    }
+
     return 0;
 }
