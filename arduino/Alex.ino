@@ -152,7 +152,7 @@ volatile int rightPICount = 0;
 volatile unsigned long leftDegrees, rightDegrees;
 
 int degreesToTicks(int deg) {
-  int dist = deg/360.0 * 31.4;  return (dist*COUNTS_PER_REV/WHEEL_CIRC)*0.70;
+  int dist = deg/360.0 * 31.4;  return (dist*COUNTS_PER_REV/WHEEL_CIRC);
 }
 
 void leftISR(){
@@ -320,7 +320,7 @@ void right(float ang, float speed)
 
   deltaTicks = degreesToTicks(ang);
   targetTicks = rightReverseTicksTurns + deltaTicks;
-  analogWrite(RR, val*ratio);
+  analogWrite(RR, val*0.77);
   analogWrite(LF, val);
   analogWrite(LR, 0);
   analogWrite(RF, 0);
@@ -463,6 +463,7 @@ void waitForHello()
 
 void setup() {
   cli();setupEINT();setupSerial();startSerial();setupMotors();startMotors();enablePullups();initializeState();sei();setupUltrasonic();
+  
 }
 
 void handlePacket(TPacket *packet)
@@ -493,39 +494,47 @@ void setupUltrasonic() {
 }
 
 void checkDistance() {
-  PORTD &= B01111111; // SET PIN 7 LOW (LEFT TRIGGER)
-  delayMicroseconds(5);
-  PORTD |= B10000000; // SET PIN 7 HIGH (LEFT TRIGGER)
-  delayMicroseconds(10);
-  PORTD &= B01111111; // SET PIN 7 LOW (LEFT TRIGGER)
-  DDRB &= B111110; // DECLARE PIN 8 INPUT (LEFT ECHO)
-  frontDuration = pulseIn(8, HIGH);
-  frontDistance = (frontDuration * 0.0343) / 2;
-  if (dir == FORWARD && frontDistance < 5) { // NEED TO IMPLEMENT BOOL SAFETY FIRST
-    stop();
-  }
-  
-  Serial.print("Distance from front wall: ");
-  Serial.print(frontDistance);
-  Serial.println("cm.");
 
-  delay(60); // wait for first ping over
-  
-  PORTB &= B101111; // SET PIN 12 TO LOW (RIGHT TRIGGER)
-  delayMicroseconds(5);
-  PORTB |= B010000; // SET PIN 12 TO HIGH (RIGHT TRIGGER)
-  delayMicroseconds(10);
-  PORTB &= B101111; // SET PIN 12 TO LOW (RIGHT TRIGGER)
-  DDRB &= B011111; // DECLARE PIN 13 AS INPUT RIGHT ECHO
-  backDuration = pulseIn(13, HIGH);
-  backDistance = (backDuration * 0.0343) / 2;
-  if (dir == BACKWARD && backDistance < 5) {
-    stop();
+  if (dir == FORWARD) {
+    PORTB &= B101111; // SET PIN 12 TO LOW (RIGHT TRIGGER)
+    delayMicroseconds(5);
+    PORTB |= B010000; // SET PIN 12 TO HIGH (RIGHT TRIGGER)
+    delayMicroseconds(10);
+    PORTB &= B101111; // SET PIN 12 TO LOW (RIGHT TRIGGER)
+    DDRB &= B011111; // DECLARE PIN 13 AS INPUT RIGHT ECHO
+    frontDuration = pulseIn(13, HIGH);
+    frontDistance = (frontDuration * 0.0343) / 2;
+    //Serial.println(frontDistance);
+    if ( frontDistance < 15) {
+      stop();
+    }
+  }
+  else if (dir == BACKWARD) {
+    PORTD &= B01111111; // SET PIN 7 LOW (LEFT TRIGGER)
+    delayMicroseconds(5);
+    PORTD |= B10000000; // SET PIN 7 HIGH (LEFT TRIGGER)
+    delayMicroseconds(10);
+    PORTD &= B01111111; // SET PIN 7 LOW (LEFT TRIGGER)
+    DDRB &= B111110; // DECLARE PIN 8 INPUT (LEFT ECHO)
+    backDuration = pulseIn(8, HIGH);
+    backDistance = (backDuration * 0.0343) / 2;
+    //Serial.println(backDistance);
+    if (backDistance < 15) {
+     stop();
+    }
   }
   
-  Serial.print("Distance from back wall: ");
-  Serial.print(backDistance);
-  Serial.println("cm.");
+//  Serial.print("Distance from front wall: ");
+//  Serial.print(frontDistance);
+//  Serial.println("cm.");
+  
+  
+  
+
+  
+//  Serial.print("Distance from back wall: ");
+//  Serial.print(backDistance);
+//  Serial.println("cm.");
 }
 
 
@@ -543,13 +552,14 @@ void loop() {
         sendBadChecksum();
     } 
   
-  Serial.println(ratio);
+  //Serial.println(ratio);
   if (deltaDist > 0) {
     if (dir == FORWARD) {
       analogWrite(RF, val*ratio);
       if (forwardDist > newDist) {
         deltaDist = 0;
         newDist = 0;
+        
         stop();
       } 
     } else if (dir == BACKWARD) {

@@ -77,18 +77,29 @@ void handleError(TResult error) {
 }
 
 void handleStatus(TPacket *packet) {
-  ROS_INFO(" ------- ALEX STATUS REPORT ------- ");
-  /*ROS_INFO(("Left Forward Ticks:\t\t" + std::to_string(packet->params[0])).c_str());
+  ROS_INFO(" ------- ALEX STATUS REPORT ------- ");  
+  ROS_INFO("Left Forwsard Ticks:\t\t%lu", (unsigned long)packet->params[0]);
+  ROS_INFO("Right Forward Ticks:\t\t%lu", (unsigned long)packet->params[1]);
+  ROS_INFO("Left Reverse Ticks:\t\t%lu", (unsigned long)packet->params[2]);
+  ROS_INFO("Right Reverse Ticks:\t\t%lu", (unsigned long)packet->params[3]);
+  ROS_INFO("Left Forward Ticks Turns:\t\t%lu", (unsigned long)packet->params[4]);
+  ROS_INFO("Right Forward Ticks Turns:\t\t%lu", (unsigned long)packet->params[5]);
+  ROS_INFO("Left Reverse Ticks Turns:\t\t%lu", (unsigned long)packet->params[6]);
+  ROS_INFO("Right Reverse Ticks Turns:\t\t%lu", (unsigned long)packet->params[7]);
+  ROS_INFO("Forward Distance:\t\t%lu", (unsigned long)packet->params[8]);
+  ROS_INFO("Reverse Distance:\t\t%lu", (unsigned long)packet->params[9]);
+  
+  /*ROS_INFO(("Left Forwsard Ticks:\t\t" + std::to_string(packet->params[0])).c_str());
   ROS_INFO(("Right Forward Ticks:\t\t" + std::to_string(packet->params[1])).c_str());
   ROS_INFO(("Left Reverse Ticks:\t\t" + std::to_string(packet->params[2])).c_str());
   ROS_INFO(("Right Reverse Ticks:\t\t" + std::to_string(packet->params[3])).c_str());
   ROS_INFO(("Left Forward Ticks Turns:\t" + std::to_string(packet->params[4])).c_str());
-  ROS_INFO(("Right Forward Ticks Turns:\t" + std::to_string(packet->params[5])).c_str());
+  ROS_INFO(("Right Forward Ticks Turns:\t" + std:s:to_string(packet->params[5])).c_str());
   ROS_INFO(("Left Reverse Ticks Turns:\t" + std::to_string(packet->params[6])).c_str());
   ROS_INFO(("Right Reverse Ticks Turns:\t" + std::to_string(packet->params[7])).c_str());
   ROS_INFO(("Forward Distance:\t\t" + std::to_string(packet->params[8])).c_str());
-  ROS_INFO(("Reverse Distance:\t\t" + std::to_string(packet->params[9])).c_str());
-  ROS_INFO("---------------------------------------\n");*/
+  ROS_INFO(("Reverse Distance:\t\t" + std::to_string(packet->params[9])).c_str());*/
+  ROS_INFO("---------------------------------------\n");
 }
 
 void handleResponse(TPacket *packet) {
@@ -132,8 +143,8 @@ void handleErrorResponse(TPacket *packet) {
 }
 
 void handleMessage(TPacket *packet) {
-  std::string message(packet->data);
-  //ROS_INFO("Message from Alex: " + message);
+  //std::string message(packet->data);
+  ROS_INFO("Message from Alex: %s", (packet->data));
 }
 
 void handlePacket(TPacket *packet) {

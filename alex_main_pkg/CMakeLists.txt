@@ -156,8 +156,6 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
-add_library(
-
 add_executable(talker src/debug/talker.cpp)
 target_link_libraries(talker ${catkin_LIBRARIES})
 add_dependencies(talker alex_main_pkg_generate_messages_cpp)
@@ -177,6 +175,12 @@ add_dependencies(main_node alex_main_pkg_generate_messages_cpp)
 add_executable(camera_node src/camera_node/camera_node.cpp)
 target_link_libraries(camera_node ${catkin_LIBRARIES})
 add_dependencies(camera_node alex_main_pkg_generate_messages_cpp)
+
+add_library(serial src/main_node/serial.cpp)
+add_library(serialize src/main_node/serialize.cpp)
+target_link_libraries(main_node serial)
+target_link_libraries(main_node serialize)
+
 
 #############
 ## Install ##

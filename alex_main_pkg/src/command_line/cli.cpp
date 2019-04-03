@@ -37,8 +37,8 @@ bool parse_command (const std::string &input, alex_main_pkg::cli_messages &msg) 
     msg.request.speed = 0;
     return true;
   } else {
-    command >> dist >> speed;
-    if (command.fail()) return false;
+    detoken >> dist >> speed;
+    if (detoken.fail()) return false;
     msg.request.action = command;
     msg.request.distance = dist;
     msg.request.speed = speed;
