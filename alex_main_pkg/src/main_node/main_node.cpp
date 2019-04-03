@@ -21,6 +21,12 @@ sem_t _xmitSema;
 
 //TODO Send all error messages to cli node
 
+void sendPacket(TPacket *packet) {
+  char buffer[PACKET_SIZE];
+  int len = serialize(buffer, packet, sizeof(TPacket));
+  serialWrite(buffer, len);
+}
+
 void execute_cli_command(alex_main_pkg::cli_messages::Request &req, alex_main_pkg::cli_messages::Response &res) {
   char command = req.action;
   uint32_t speed = req.speed;
@@ -133,16 +139,16 @@ void handleError(TResult error) {
 
 void handleStatus(TPacket *packet) {
   ROS_INFO(" ------- ALEX STATUS REPORT ------- ");
-  ROS_INFO("Left Forward Ticks:\t\t" + std::to_string(packet->params[0]));
-  ROS_INFO("Right Forward Ticks:\t\t" + std::to_string(packet->params[1]));
-  ROS_INFO("Left Reverse Ticks:\t\t" + std::to_string(packet->params[2]));
-  ROS_INFO("Right Reverse Ticks:\t\t" + std::to_string(packet->params[3]));
-  ROS_INFO("Left Forward Ticks Turns:\t" + std::to_string(packet->params[4]));
-  ROS_INFO("Right Forward Ticks Turns:\t" + std::to_string(packet->params[5]));
-  ROS_INFO("Left Reverse Ticks Turns:\t" + std::to_string(packet->params[6]));
-  ROS_INFO("Right Reverse Ticks Turns:\t" + std::to_string(packet->params[7]));
-  ROS_INFO("Forward Distance:\t\t" + std::to_string(packet->params[8]));
-  ROS_INFO("Reverse Distance:\t\t" + std::to_string(packet->params[9]));
+  ROS_INFO(("Left Forward Ticks:\t\t" + std::to_string(packet->params[0])).c_str());
+  ROS_INFO(("Right Forward Ticks:\t\t" + std::to_string(packet->params[1])).c_str());
+  ROS_INFO(("Left Reverse Ticks:\t\t" + std::to_string(packet->params[2])).c_str());
+  ROS_INFO(("Right Reverse Ticks:\t\t" + std::to_string(packet->params[3])).c_str());
+  ROS_INFO(("Left Forward Ticks Turns:\t" + std::to_string(packet->params[4])).c_str());
+  ROS_INFO(("Right Forward Ticks Turns:\t" + std::to_string(packet->params[5])).c_str());
+  ROS_INFO(("Left Reverse Ticks Turns:\t" + std::to_string(packet->params[6])).c_str());
+  ROS_INFO(("Right Reverse Ticks Turns:\t" + std::to_string(packet->params[7])).c_str());
+  ROS_INFO(("Forward Distance:\t\t" + std::to_string(packet->params[8])).c_str());
+  ROS_INFO(("Reverse Distance:\t\t" + std::to_string(packet->params[9])).c_str());
   ROS_INFO("---------------------------------------\n");
 }
 
@@ -211,12 +217,6 @@ void handlePacket(TPacket *packet) {
   }
 }
 
-void sendPacket(TPacket *packet) {
-  char buffer[PACKET_SIZE];
-  int len = serialize(buffer, packet, sizeof(TPacket));
-  serialWrite(buffer, len);
-}
-
 void *receiveThread(void *p) {
   char buffer[PACKET_SIZE];
   int len;
@@ -233,7 +233,7 @@ void *receiveThread(void *p) {
         counter=0;
         handlePacket(&packet);
       }	else {
-        if(result != PACKET_INCOMPLETE)	{
+        if (result != PACKET_INCOMPLETE)	{
           ROS_INFO("PACKET ERROR");
           handleError(result);
         }
@@ -250,6 +250,11 @@ void *receiveThread(void *p) {
 
 int main(int argc, char **argv) {
 
+  // Start ROS
+  ros::init(argc, argv, "main_node");
+  ros::NodeHandle main_node_handle;
+  ros::ServiceServer cli_server = main_node_handle.advertiseService("cli_command", execute_cli_command);
+  
   // Connect to the Arduino
   startSerial(PORT_NAME, BAUD_RATE, 8, 'N', 1, 5);
 
@@ -267,11 +272,6 @@ int main(int argc, char **argv) {
   helloPacket.packetType = PACKET_TYPE_HELLO;
   sendPacket(&helloPacket);
 
-  // Start ROS
-  ros::init(argc, argv, "main_node");
-  ros::NodeHandle main_node_handle;
-  ros::ServiceServer cli_server = main_node_handle.advertiseService("cli_command", execute_cli_command);
-  //TODO Find out what happens to response packets
   ROS_INFO("Main Node Started");
 
   //ros::Subscriber cli_sub = n.subscribe("cli_keystrokes", 0, cli_callback);

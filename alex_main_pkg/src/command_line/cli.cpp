@@ -16,7 +16,7 @@
  * accordingly).
  */
 bool parse_command (const std::string &input, alex_main_pkg::cli_messages &msg) {
-  char validCmds[] = {'P', 'W', 'A', 'S', 'D', 'X', 'G', 'C', 'Q'};
+  char validCmds[] = {'P', 'W', 'A', 'S', 'D', 'X', 'G', 'C', 'Q', 'U'};
   bool isValid = false;
   std::istringstream detoken(input);
   std::string temp; uint16_t dist, speed; char command;
@@ -31,7 +31,7 @@ bool parse_command (const std::string &input, alex_main_pkg::cli_messages &msg) 
   }
   if (!isValid) return false;
   if (command == 'P' || command == 'X' || command = 'G' || command == 'C' ||
-    command == 'Q') {
+    command == 'Q' || command == 'U') {
     msg.request.action = command;
     msg.request.distance = 0;
     msg.request.speed = 0;
