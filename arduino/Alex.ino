@@ -221,7 +221,6 @@ void startSerial()
 
 int readSerial(char *buffer)
 {
-
   int count=0;
 
   while(Serial.available())
@@ -330,7 +329,6 @@ void right(float ang, float speed)
 // Stop Alex. To replace with bare-metal code later.
 void stop()
 { 
-
   switch(dir) {
     case FORWARD:
       analogWrite(LF, 0);
@@ -361,7 +359,6 @@ void stop()
 
 void clearCounters()
 {
-  
   leftReverseTicksTurns=0;
   rightReverseTicksTurns=0;
   leftForwardTicksTurns=0;
@@ -504,6 +501,10 @@ void checkDistance() {
   DDRB &= B111110; // DECLARE PIN 8 INPUT (LEFT ECHO)
   frontDuration = pulseIn(8, HIGH);
   frontDistance = (frontDuration * 0.0343) / 2;
+  if (dir == FORWARD && frontDistance < 5) { // NEED TO IMPLEMENT BOOL SAFETY FIRST
+    stop();
+  }
+  
   Serial.print("Distance from front wall: ");
   Serial.print(frontDistance);
   Serial.println("cm.");
@@ -518,6 +519,10 @@ void checkDistance() {
   DDRB &= B011111; // DECLARE PIN 13 AS INPUT RIGHT ECHO
   backDuration = pulseIn(13, HIGH);
   backDistance = (backDuration * 0.0343) / 2;
+  if (dir == BACKWARD && backDistance < 5) {
+    stop();
+  }
+  
   Serial.print("Distance from back wall: ");
   Serial.print(backDistance);
   Serial.println("cm.");
@@ -582,6 +587,8 @@ void loop() {
 
   }
 
-  checkDistance();
+  if (dir == FORWARD || dir == BACKWARD) {
+    checkDistance();
+  }
   
 }
