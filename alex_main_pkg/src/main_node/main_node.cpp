@@ -19,103 +19,40 @@
 int exitFlag = 0;
 sem_t _xmitSema;
 
-//TODO Send all error messages to cli node
-
-void sendPacket(TPacket *packet) {
-  char buffer[PACKET_SIZE];
-  int len = serialize(buffer, packet, sizeof(TPacket));
-  serialWrite(buffer, len);
-}
-
-bool execute_cli_command(alex_main_pkg::cli_messages::Request &req, alex_main_pkg::cli_messages::Response &res) {
-  char command = req.action;
-  uint32_t speed = req.speed;
-  uint32_t distance = req.distance;
-  TPacket commandPacket;
-  bool valid = true;
-  commandPacket.packetType = PACKET_TYPE_COMMAND;
-  commandPacket.params[0] = distance, commandPacket.params[1] = speed;
-
-  if (command == 'W') { // Forward movement
-    ROS_INFO("Moving Forward");
-    commandPacket.command = COMMAND_FORWARD;
-    std::string temp = "Success - Forward by " + std::to_string(distance) + " at speed " + std::to_string(speed);
-    res.result = temp;
-    // Add errors here as well as need be.
-
-  } else if (command == 'S') { // Backward movement
-    ROS_INFO("Moving Back");
-    commandPacket.command = COMMAND_REVERSE;
-    std::string temp = "Success - Backward by " + std::to_string(distance) + " at speed " + std::to_string(speed);
-    res.result = temp;
-    // Add errors here as well as need be.
-
-  } else if (command == 'A') { // Left turn
-    ROS_INFO("Turning Left");
-    commandPacket.command = COMMAND_TURN_LEFT;
-    std::string temp = "Success - Left by " + std::to_string(distance) + " at speed " + std::to_string(speed);
-    res.result = temp;
-    // Add errors here as well as need be.
-
-  } else if (command == 'D') { // Right turn
-    ROS_INFO("Turning Right");
-    commandPacket.command = COMMAND_TURN_RIGHT;
-    std::string temp = "Success - Right by " + std::to_string(distance) + " at speed " + std::to_string(speed);
-    res.result = temp;
-    // Add errors here as well as need be.
-
-  } else if (command == 'X') { // Halt
-    ROS_INFO("Stopping");
-    commandPacket.command = COMMAND_STOP;
-    std::string temp = "Success - Stopped";
-    res.result = temp;
-    // Add errors here as well as need be.
-
-  } else if (command == 'P') { // Take photo
-    ros::NodeHandle camera_command_handle;
-    ros::ServiceClient client = camera_command_handle.serviceClient<alex_main_pkg::camera>("take_photo");
-    alex_main_pkg::camera msg;
-    ROS_INFO("Starting Colour Detection");
-
-    msg.request.input = "Start detection";
-
-    if (client.call(msg)) {
-      if (msg.response.output == "Detection failed") {
-        res.result = "Unknown detection error";
-      } else {
-        res.result = msg.response.output;
-      }
-    } else {
-      ROS_ERROR("Failed to contact camera_node");
+/**
+ * Function to check and parse command entered by user.
+ *
+ * @param[in] input The command as entered by the user.
+ * @param[out] msg The cli_message to send to the main node.
+ * @return False if invalid, true if valid (and msg will be updated
+ * accordingly).
+ */
+bool parse_command (const std::string &input, char &command, uint32_t &distance,
+uint32_t &speed) {
+  char validCmds[] = {'P', 'W', 'A', 'S', 'D', 'X', 'G', 'C', 'Q', 'U'};
+  bool isValid = false;
+  std::istringstream detoken(input);
+  std::string temp;
+  temp = input;
+  if (temp.size() != 1) return false;
+  command = toupper(temp[0]); //extract first character and capitalise
+  for (auto &c : validCmds) {
+    if (command == c) {
+      isValid = true;
+      break;
     }
-    // Add errors here as well as need be.
-  
-  } else if (command == 'C') { // Clear stats
-    //NOTE Studio code misleadingly hints that individual counters can be
-    //cleared, but can only clear all counters. As we would not need to clear
-    //individual counters, we'll just stick to that
-    ROS_INFO("Clearing telemetry counters");
-    commandPacket.command = COMMAND_CLEAR_STATS;
-  
-  } else if (command == 'G') { // Get stats
-    ROS_INFO("Reading telemetry");
-    commandPacket.command = COMMAND_GET_STATS;
-  
-  } else if (command == 'Q') { // Quit
-    /*ROS_INFO("Stopping");
-    commandPacket.command = COMMAND_STOP;
-    std::string temp = "Success - Stopped";
-    res.result = temp;*/
-    //TODO How to make it quit?
-  
-  } else { // Error or unknown command
-    valid = false;
-    res.result = "Unknown command entered";
   }
-
-  if (valid) sendPacket(&commandPacket);
-
-  return true;
+  if (!isValid) return false;
+  if (command == 'P' || command == 'X' || command == 'G' || command == 'C' ||
+    command == 'Q' || command == 'U') {
+    distance = 0;
+    speed = 0;
+    return true;
+  } else {
+    detoken >> distance >> speed;
+    if (detoken.fail()) return false;
+    return true;
+  }
 }
 
 //void cli_callback(const std_msgs::String::ConstPtr& msg) {
@@ -243,6 +180,19 @@ void *receiveThread(void *p) {
     }
   }
 }
+void sendPacket(TPacket *packet) {
+  char buffer[PACKET_SIZE];
+  int len = serialize(buffer, packet, sizeof(TPacket));
+  serialWrite(buffer, len);
+}
+
+bool execute_cli_command(alex_main_pkg::cli_messages::Request &req, alex_main_pkg::cli_messages::Response &res) {
+  char command = req.action;
+  uint32_t speed = req.speed;
+  uint32_t distance = req.distance;
+    return true;
+}
+
 
 // Shouldn't be needed but keep just in case
 /* void flushInput() {
@@ -254,8 +204,6 @@ int main(int argc, char **argv) {
 
   // Start ROS
   ros::init(argc, argv, "main_node");
-  ros::NodeHandle main_node_handle;
-  ros::ServiceServer cli_server = main_node_handle.advertiseService("cli_command", execute_cli_command);
   
   // Connect to the Arduino
   startSerial(PORT_NAME, BAUD_RATE, 8, 'N', 1, 5);
@@ -274,12 +222,103 @@ int main(int argc, char **argv) {
   helloPacket.packetType = PACKET_TYPE_HELLO;
   sendPacket(&helloPacket);
 
-  ROS_INFO("Main Node Started");
+  ROS_INFO("MAIN NODE STARTED");
+  
+  //pull input from user
+  while(ros::ok()) {
+    std::string input;
+    std::getline(std::cin, input);
+    std::string original_input = input;
+    uint32_t distance, speed;
+    char command;
+    if (!parse_command(input, command, distance, speed)) {
+      ROS_ERROR("Invalid command.");
+    } else {
+      TPacket commandPacket;
+      bool valid = true;
+      commandPacket.packetType = PACKET_TYPE_COMMAND;
+      commandPacket.params[0] = distance, commandPacket.params[1] = speed;
 
-  //ros::Subscriber cli_sub = n.subscribe("cli_keystrokes", 0, cli_callback);
-  //ros::ServiceClient client = n.serviceClient<alex_main_pkg::camera>("camera_node");
-  //alex_main_pkg::camera srv;
+      if (command == 'W') { // Forward movement
+        ROS_INFO("Moving Forward");
+        commandPacket.command = COMMAND_FORWARD;
+        std::string temp = "Success - Forward by " + std::to_string(distance) + " at speed " + std::to_string(speed);
+        res.result = temp;
+        // Add errors here as well as need be.
 
-  ros::spin();
+      } else if (command == 'S') { // Backward movement
+        ROS_INFO("Moving Back");
+        commandPacket.command = COMMAND_REVERSE;
+        std::string temp = "Success - Backward by " + std::to_string(distance) + " at speed " + std::to_string(speed);
+        res.result = temp;
+        // Add errors here as well as need be.
+
+      } else if (command == 'A') { // Left turn
+        ROS_INFO("Turning Left");
+        commandPacket.command = COMMAND_TURN_LEFT;
+        std::string temp = "Success - Left by " + std::to_string(distance) + " at speed " + std::to_string(speed);
+        res.result = temp;
+        // Add errors here as well as need be.
+
+      } else if (command == 'D') { // Right turn
+        ROS_INFO("Turning Right");
+        commandPacket.command = COMMAND_TURN_RIGHT;
+        std::string temp = "Success - Right by " + std::to_string(distance) + " at speed " + std::to_string(speed);
+        res.result = temp;
+        // Add errors here as well as need be.
+
+      } else if (command == 'X') { // Halt
+        ROS_INFO("Stopping");
+        commandPacket.command = COMMAND_STOP;
+        std::string temp = "Success - Stopped";
+        res.result = temp;
+        // Add errors here as well as need be.
+
+      } else if (command == 'P') { // Take photo
+        ros::NodeHandle camera_command_handle;
+        ros::ServiceClient client = camera_command_handle.serviceClient<alex_main_pkg::camera>("take_photo");
+        alex_main_pkg::camera msg;
+        ROS_INFO("Starting Colour Detection");
+
+        msg.request.input = "Start detection";
+
+        if (client.call(msg)) {
+          if (msg.response.output == "Detection failed") {
+            ROS_INFO("Unknown detection error");
+          } else {
+            ROS_ERROR(msg.response.output);
+          }
+        } else {
+          ROS_ERROR("Failed to contact camera_node");
+        }
+
+      } else if (command == 'C') { // Clear stats
+        //NOTE Studio code misleadingly hints that individual counters can be
+        //cleared, but can only clear all counters. As we would not need to clear
+        //individual counters, we'll just stick to that
+        ROS_INFO("Clearing telemetry counters");
+        commandPacket.command = COMMAND_CLEAR_STATS;
+
+      } else if (command == 'G') { // Get stats
+        ROS_INFO("Reading telemetry");
+        commandPacket.command = COMMAND_GET_STATS;
+
+      } else if (command == 'Q') { // Quit
+        /*ROS_INFO("Stopping");
+          commandPacket.command = COMMAND_STOP;
+          std::string temp = "Success - Stopped";
+          res.result = temp;*/
+        //TODO How to make it quit?
+
+      } else { // Error or unknown command
+        valid = false;
+        res.result = "Unknown command entered";
+      }
+
+      if (valid) sendPacket(&commandPacket);
+    }
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
   return 0;
 }
