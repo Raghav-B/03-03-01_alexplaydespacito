@@ -122,6 +122,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
+  include 
   include ${catkin_INCLUDE_DIRS}
 )
 
@@ -154,6 +155,8 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+add_library(
 
 add_executable(talker src/debug/talker.cpp)
 target_link_libraries(talker ${catkin_LIBRARIES})

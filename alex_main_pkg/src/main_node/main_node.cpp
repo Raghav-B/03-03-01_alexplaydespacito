@@ -27,7 +27,7 @@ void sendPacket(TPacket *packet) {
   serialWrite(buffer, len);
 }
 
-void execute_cli_command(alex_main_pkg::cli_messages::Request &req, alex_main_pkg::cli_messages::Response &res) {
+bool execute_cli_command(alex_main_pkg::cli_messages::Request &req, alex_main_pkg::cli_messages::Response &res) {
   char command = req.action;
   uint32_t speed = req.speed;
   uint32_t distance = req.distance;
@@ -114,6 +114,8 @@ void execute_cli_command(alex_main_pkg::cli_messages::Request &req, alex_main_pk
   }
 
   if (valid) sendPacket(&commandPacket);
+
+  return true;
 }
 
 //void cli_callback(const std_msgs::String::ConstPtr& msg) {
@@ -139,7 +141,7 @@ void handleError(TResult error) {
 
 void handleStatus(TPacket *packet) {
   ROS_INFO(" ------- ALEX STATUS REPORT ------- ");
-  ROS_INFO(("Left Forward Ticks:\t\t" + std::to_string(packet->params[0])).c_str());
+  /*ROS_INFO(("Left Forward Ticks:\t\t" + std::to_string(packet->params[0])).c_str());
   ROS_INFO(("Right Forward Ticks:\t\t" + std::to_string(packet->params[1])).c_str());
   ROS_INFO(("Left Reverse Ticks:\t\t" + std::to_string(packet->params[2])).c_str());
   ROS_INFO(("Right Reverse Ticks:\t\t" + std::to_string(packet->params[3])).c_str());
@@ -149,7 +151,7 @@ void handleStatus(TPacket *packet) {
   ROS_INFO(("Right Reverse Ticks Turns:\t" + std::to_string(packet->params[7])).c_str());
   ROS_INFO(("Forward Distance:\t\t" + std::to_string(packet->params[8])).c_str());
   ROS_INFO(("Reverse Distance:\t\t" + std::to_string(packet->params[9])).c_str());
-  ROS_INFO("---------------------------------------\n");
+  ROS_INFO("---------------------------------------\n");*/
 }
 
 void handleResponse(TPacket *packet) {
@@ -157,7 +159,7 @@ void handleResponse(TPacket *packet) {
   switch(packet->command)	{
     case RESP_OK:
       ROS_INFO("Command OK");
-      bre;
+      break;
 
     case RESP_STATUS:
       handleStatus(packet);
@@ -193,8 +195,8 @@ void handleErrorResponse(TPacket *packet) {
 }
 
 void handleMessage(TPacket *packet) {
-  std::string message(packet->data)
-  ROS_INFO("Message from Alex: " + message);
+  std::string message(packet->data);
+  //ROS_INFO("Message from Alex: " + message);
 }
 
 void handlePacket(TPacket *packet) {

@@ -20,17 +20,17 @@ bool parse_command (const std::string &input, alex_main_pkg::cli_messages &msg) 
   bool isValid = false;
   std::istringstream detoken(input);
   std::string temp; uint16_t dist, speed; char command;
-  input >> temp;
+  temp = input;
   if (temp.size() != 1) return false;
   command = toupper(temp[0]); //extract first character and capitalise
-  for (auto &c : valid) {
+  for (auto &c : validCmds) {
     if (command == c) {
       isValid = true;
       break;
     }
   }
   if (!isValid) return false;
-  if (command == 'P' || command == 'X' || command = 'G' || command == 'C' ||
+  if (command == 'P' || command == 'X' || command == 'G' || command == 'C' ||
     command == 'Q' || command == 'U') {
     msg.request.action = command;
     msg.request.distance = 0;

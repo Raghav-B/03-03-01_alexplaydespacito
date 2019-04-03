@@ -42,7 +42,7 @@ int main() {
     cv::inRange(blur, lower_red, higher_red, mask);
 
     // find the largest contour
-    std::vector<std::vector<cv::Point>> contours;
+    std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
     cv::findContours(mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
     long largest_area_red = 0;
