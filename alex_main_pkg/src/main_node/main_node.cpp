@@ -19,6 +19,8 @@
 int exitFlag = 0;
 sem_t _xmitSema;
 
+//TODO Send all error messages to cli node
+
 void execute_cli_command(alex_main_pkg::cli_messages::Request &req, alex_main_pkg::cli_messages::Response &res) {
   char command = req.action;
   uint32_t speed = req.speed;
@@ -92,7 +94,6 @@ void execute_cli_command(alex_main_pkg::cli_messages::Request &req, alex_main_pk
   } else if (command == 'G') { // Get stats
     ROS_INFO("Reading telemetry");
     commandPacket.command = COMMAND_GET_STATS;
-    //TODO how to print stats?
   
   } else if (command == 'Q') { // Quit
     /*ROS_INFO("Stopping");

@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
     if (!parse_command(input, msg)) {
       //TODO invalid command, feedback to user
       ROS_ERROR("Invalid command.");
-    } else if (cli_client.call(msg)) {
+    } else if (!cli_client.call(msg)) {
       //if (msg.response.result == "success") {
       //    ROS_INFO("%s - Performed Successfully", original_input.c_str());
       //} else {
