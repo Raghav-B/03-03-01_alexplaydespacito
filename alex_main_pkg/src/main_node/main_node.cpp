@@ -16,6 +16,9 @@
 #define PORT_NAME			"/dev/ttyACM0" //TODO verify
 #define BAUD_RATE			B57600
 
+//TODO make the Arduino recognise the safety switch command, and report its
+//status with telemetry packets
+
 int exitFlag = 0;
 sem_t _xmitSema;
 
@@ -88,17 +91,6 @@ void handleStatus(TPacket *packet) {
   ROS_INFO("Right Reverse Ticks Turns:\t\t%lu", (unsigned long)packet->params[7]);
   ROS_INFO("Forward Distance:\t\t%lu", (unsigned long)packet->params[8]);
   ROS_INFO("Reverse Distance:\t\t%lu", (unsigned long)packet->params[9]);
-  
-  /*ROS_INFO(("Left Forwsard Ticks:\t\t" + std::to_string(packet->params[0])).c_str());
-  ROS_INFO(("Right Forward Ticks:\t\t" + std::to_string(packet->params[1])).c_str());
-  ROS_INFO(("Left Reverse Ticks:\t\t" + std::to_string(packet->params[2])).c_str());
-  ROS_INFO(("Right Reverse Ticks:\t\t" + std::to_string(packet->params[3])).c_str());
-  ROS_INFO(("Left Forward Ticks Turns:\t" + std::to_string(packet->params[4])).c_str());
-  ROS_INFO(("Right Forward Ticks Turns:\t" + std:s:to_string(packet->params[5])).c_str());
-  ROS_INFO(("Left Reverse Ticks Turns:\t" + std::to_string(packet->params[6])).c_str());
-  ROS_INFO(("Right Reverse Ticks Turns:\t" + std::to_string(packet->params[7])).c_str());
-  ROS_INFO(("Forward Distance:\t\t" + std::to_string(packet->params[8])).c_str());
-  ROS_INFO(("Reverse Distance:\t\t" + std::to_string(packet->params[9])).c_str());*/
   ROS_INFO("---------------------------------------\n");
 }
 
@@ -197,14 +189,6 @@ void sendPacket(TPacket *packet) {
   serialWrite(buffer, len);
 }
 
-bool execute_cli_command(alex_main_pkg::cli_messages::Request &req, alex_main_pkg::cli_messages::Response &res) {
-  char command = req.action;
-  uint32_t speed = req.speed;
-  uint32_t distance = req.distance;
-    return true;
-}
-
-
 // Shouldn't be needed but keep just in case
 /* void flushInput() {
    char c;
@@ -234,14 +218,15 @@ int main(int argc, char **argv) {
   sendPacket(&helloPacket);
 
   ROS_INFO("MAIN NODE STARTED");
-  
+
+
   //pull input from user
+  std::string input;
+  uint32_t distance, speed;
+  char command;
   while(ros::ok()) {
-    std::string input;
     std::getline(std::cin, input);
-    std::string original_input = input;
-    uint32_t distance, speed;
-    char command;
+    //std::string original_input = input;
     if (!parse_command(input, command, distance, speed)) {
       ROS_ERROR("Invalid command.");
     } else {
@@ -253,36 +238,26 @@ int main(int argc, char **argv) {
       if (command == 'W') { // Forward movement
         ROS_INFO("Moving Forward");
         commandPacket.command = COMMAND_FORWARD;
-        std::string temp = "Success - Forward by " + std::to_string(distance) + " at speed " + std::to_string(speed);
-        res.result = temp;
         // Add errors here as well as need be.
 
       } else if (command == 'S') { // Backward movement
         ROS_INFO("Moving Back");
         commandPacket.command = COMMAND_REVERSE;
-        std::string temp = "Success - Backward by " + std::to_string(distance) + " at speed " + std::to_string(speed);
-        res.result = temp;
         // Add errors here as well as need be.
 
       } else if (command == 'A') { // Left turn
         ROS_INFO("Turning Left");
         commandPacket.command = COMMAND_TURN_LEFT;
-        std::string temp = "Success - Left by " + std::to_string(distance) + " at speed " + std::to_string(speed);
-        res.result = temp;
         // Add errors here as well as need be.
 
       } else if (command == 'D') { // Right turn
         ROS_INFO("Turning Right");
         commandPacket.command = COMMAND_TURN_RIGHT;
-        std::string temp = "Success - Right by " + std::to_string(distance) + " at speed " + std::to_string(speed);
-        res.result = temp;
         // Add errors here as well as need be.
 
       } else if (command == 'X') { // Halt
         ROS_INFO("Stopping");
         commandPacket.command = COMMAND_STOP;
-        std::string temp = "Success - Stopped";
-        res.result = temp;
         // Add errors here as well as need be.
 
       } else if (command == 'P') { // Take photo
@@ -315,15 +290,17 @@ int main(int argc, char **argv) {
         commandPacket.command = COMMAND_GET_STATS;
 
       } else if (command == 'Q') { // Quit
-        /*ROS_INFO("Stopping");
-          commandPacket.command = COMMAND_STOP;
-          std::string temp = "Success - Stopped";
-          res.result = temp;*/
-        //TODO How to make it quit?
+        ROS_INFO("Stopping");
+        //commandPacket.command = COMMAND_STOP;
+        //TODO Any shutdown procedures for ROS? What packet to send to Arduino
+        //to shut it down?
 
+      } else if (command == 'U') {
+        ROS_INFO("Toggling safety")
+        commandPacket.command = COMMAND_SAFETY;
       } else { // Error or unknown command
         valid = false;
-        res.result = "Unknown command entered";
+        ROS_INFO("Unknown command entered");
       }
 
       if (valid) sendPacket(&commandPacket);
