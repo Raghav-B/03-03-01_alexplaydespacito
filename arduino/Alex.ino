@@ -44,6 +44,7 @@ volatile unsigned long newDist;
 
 // Variables for ultrasonic sensor
 long frontDuration, frontDistance, backDuration, backDistance;
+bool ultrasonicSafety = true;
 
 TResult readPacket(TPacket *packet)
 {
@@ -415,6 +416,11 @@ void handleCommand(TPacket *command)
       sendOK();
       clearOneCounter(command->params[0]);
       break;
+      
+    case COMMAND_SAFETY:
+      sendOK();
+      ultrasonicSafety = !ultrasonicSafety;
+    break;
 
     /*
      * Implement code for other commands here.
@@ -504,12 +510,10 @@ void checkDistance() {
     DDRB &= B011111; // DECLARE PIN 13 AS INPUT RIGHT ECHO
     frontDuration = pulseIn(13, HIGH);
     frontDistance = (frontDuration * 0.0343) / 2;
-    //Serial.println(frontDistance);
-    if ( frontDistance < 15) {
+    if ( frontDistance < 15 && ultrasonicSafety == true) {
       stop();
     }
-  }
-  else if (dir == BACKWARD) {
+  } else if (dir == BACKWARD) {
     PORTD &= B01111111; // SET PIN 7 LOW (LEFT TRIGGER)
     delayMicroseconds(5);
     PORTD |= B10000000; // SET PIN 7 HIGH (LEFT TRIGGER)
@@ -518,23 +522,10 @@ void checkDistance() {
     DDRB &= B111110; // DECLARE PIN 8 INPUT (LEFT ECHO)
     backDuration = pulseIn(8, HIGH);
     backDistance = (backDuration * 0.0343) / 2;
-    //Serial.println(backDistance);
-    if (backDistance < 15) {
+    if (backDistance < 15 && ultrasonicSafety == true) {
      stop();
     }
   }
-  
-//  Serial.print("Distance from front wall: ");
-//  Serial.print(frontDistance);
-//  Serial.println("cm.");
-  
-  
-  
-
-  
-//  Serial.print("Distance from back wall: ");
-//  Serial.print(backDistance);
-//  Serial.println("cm.");
 }
 
 
