@@ -41,7 +41,8 @@ typedef enum
   COMMAND_STOP = 4,
   COMMAND_GET_STATS = 5,
   COMMAND_CLEAR_STATS = 6,
-  COMMAND_SAFETY = 7
+  COMMAND_SAFETY = 7,
+  COMMAND_FORCE = 8
 } TCommandType;
 #endif
 
