@@ -8,10 +8,11 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <stdint.h>
-#include "packet.h"
+#include "../../../arduino/packet.h"
 #include "serial.h"
 #include "serialize.h"
-#include "constants.h"
+//#include "constants.h"
+#include "../../../arduino/constants.h"
 
 #define PORT_NAME			"/dev/ttyACM0" //TODO verify
 #define BAUD_RATE			B57600
@@ -228,6 +229,8 @@ int main(int argc, char **argv) {
 
   ROS_INFO("MAIN NODE STARTED");
 
+  ros::Rate loop_rate(10);
+
   //pull input from user
   std::string input;
   uint32_t distance, speed;
@@ -280,7 +283,7 @@ int main(int argc, char **argv) {
           if (msg.response.output == "Detection failed") {
             ROS_INFO("Unknown detection error");
           } else {
-            ROS_ERROR(msg.response.output);
+            ROS_ERROR("%s", msg.response.output.c_str());
           }
         } else {
           ROS_ERROR("Failed to contact camera_node");
@@ -304,7 +307,7 @@ int main(int argc, char **argv) {
         //to shut it down?
 
       } else if (command == 'U') {
-        ROS_INFO("Toggling safety")
+        ROS_INFO("Toggling safety");
         commandPacket.command = COMMAND_SAFETY;
 
       } else if (command == 'K') { // Forward movement
