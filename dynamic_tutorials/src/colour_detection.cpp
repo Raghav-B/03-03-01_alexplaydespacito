@@ -22,14 +22,14 @@ int main(int argc, char **argv) {
     dynamic_reconfigure::Server<dynamic_tutorials::TutorialsConfig>::CallbackType f;
     f = boost::bind(&callback, _1, _2);
     server.setCallback(f);
-
+    /*
     cv::VideoCapture cap(0);
     if (!cap.isOpened()) {
         return -1;
     }
-
+    */
     long area_threshold = 1000;
-    cv::Mat frame, hsv, blur, mask;
+    cv::Mat frame, hsv, blur, mask, out1, out2;
 
     ros::Rate loop_rate(50);
 
@@ -38,9 +38,12 @@ int main(int argc, char **argv) {
         // for debugging
         // std::cout << lower << std::endl;
         // std::cout << upper << std::endl;
+        //std::system("raspistill -o photo.jpg");
 
         // read the video frame
-        cap >> frame;
+        //cap >> frame;
+        std::string imageName("/home/pi/Desktop/pi_workspace/src/03-03-01_alexplaydespacito/dynamic_tutorials/src/photo.jpg"); 
+        frame = cv::imread(imageName, cv::IMREAD_COLOR);
 
         // convert the frame from bgr to hsv
         cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);
@@ -76,10 +79,12 @@ int main(int argc, char **argv) {
                 cv::drawContours(frame, contours, largest_contour_index, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
             }
         }
-
+        
         // draw the frame with the contour and the mask
-        cv::imshow("frame", frame);
-        cv::imshow("mask", mask);
+        cv::resize(frame, out1, cv::Size(), 0.25, 0.25);
+        cv::resize(mask, out2, cv::Size(), 0.25, 0.25);
+        cv::imshow("frame", out1);
+        cv::imshow("mask", out2);
 
         // exit when ESC is pressed
         if (cv::waitKey(30) >= 0) {
