@@ -229,6 +229,7 @@ int main(int argc, char **argv) {
 
   ROS_INFO("MAIN NODE STARTED");
 
+  ros::start();
   ros::Rate loop_rate(10);
 
   //pull input from user
