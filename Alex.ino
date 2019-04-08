@@ -1,7 +1,8 @@
 #include <serialize.h>
-
-#include "packet.h"
 #include "constants.h"
+#include "stdint.h"
+#include "packet.h"
+
 
 typedef enum {
   STOP = 0,
@@ -44,6 +45,7 @@ volatile unsigned long newDist;
 
 // Variables for ultrasonic sensor
 long frontDuration, frontDistance, backDuration, backDistance;
+bool ultrasonicSafety = true;
 
 TResult readPacket(TPacket *packet)
 {
@@ -71,7 +73,6 @@ void sendStatus()
   statusPacket.params[7] = rightReverseTicksTurns;
   statusPacket.params[8] = forwardDist;
   statusPacket.params[9] = reverseDist;
-
   sendResponse(&statusPacket);
 }
 
@@ -89,12 +90,10 @@ void sendBadPacket()
   badPacket.packetType = PACKET_TYPE_ERROR;
   badPacket.command = RESP_BAD_PACKET;
   sendResponse(&badPacket);
-  
 }
 
 void sendBadChecksum()
 {
-
   TPacket badChecksum;
   badChecksum.packetType = PACKET_TYPE_ERROR;
   badChecksum.command = RESP_BAD_CHECKSUM;
@@ -107,7 +106,6 @@ void sendBadCommand()
   badCommand.packetType=PACKET_TYPE_ERROR;
   badCommand.command=RESP_BAD_COMMAND;
   sendResponse(&badCommand);
-
 }
 
 void sendBadResponse()
@@ -131,7 +129,6 @@ void sendResponse(TPacket *packet)
   // over the serial port.
   char buffer[PACKET_SIZE];
   int len;
-
   len = serialize(buffer, packet, sizeof(TPacket));
   writeSerial(buffer, len);
 }
@@ -141,6 +138,7 @@ void enablePullups()
 {
   DDRD  &= 0b11110011;PORTD |= 0b00001100;
 }
+
 volatile float ratio = 0.73;
 volatile float error = 0, integral = 0;
 
@@ -152,7 +150,7 @@ volatile int rightPICount = 0;
 volatile unsigned long leftDegrees, rightDegrees;
 
 int degreesToTicks(int deg) {
-  int dist = deg/360.0 * 31.4;  return (dist*COUNTS_PER_REV/WHEEL_CIRC)*0.70;
+  int dist = deg/360.0 * 31.4;  return (dist*COUNTS_PER_REV/WHEEL_CIRC);
 }
 
 void leftISR(){
@@ -199,9 +197,11 @@ void rightISR(){
 void setupEINT(){
   EICRA = 0b00001010; EIMSK = 0b00000011;
 }
+
 ISR(INT0_vect){
   leftISR();
 }
+
 ISR(INT1_vect){
   rightISR();
 }
@@ -222,10 +222,8 @@ void startSerial()
 int readSerial(char *buffer)
 {
   int count=0;
-
   while(Serial.available())
     buffer[count++] = Serial.read();
-
   return count;
 }
 
@@ -320,10 +318,62 @@ void right(float ang, float speed)
 
   deltaTicks = degreesToTicks(ang);
   targetTicks = rightReverseTicksTurns + deltaTicks;
-  analogWrite(RR, val*ratio);
+  analogWrite(RR, val*0.77);
   analogWrite(LF, val);
   analogWrite(LR, 0);
   analogWrite(RF, 0);
+}
+
+void forceForward(uint32_t moveTime, float speed)
+{
+  dir = FORWARD;
+  val = pwmVal(speed);
+  analogWrite(LF, val);
+  analogWrite(RF, val*0.73);
+  analogWrite(LR, 0);
+  analogWrite(RR, 0);
+  delay(moveTime);
+  analogWrite(LF, 0);
+  analogWrite(RF, 0);  
+}
+
+void forceReverse(uint32_t moveTime, float speed)
+{
+  dir = BACKWARD;
+  val = pwmVal(speed);
+  analogWrite(LR, val);
+  analogWrite(RR, val*0.73);
+  analogWrite(LF, 0);
+  analogWrite(RF, 0);
+  delay(moveTime);
+  analogWrite(LR, 0);
+  analogWrite(RR, 0);
+}
+
+void forceLeft(uint32_t, float speed)
+{
+  dir = LEFT;
+  val = pwmVal(speed);
+  analogWrite(LR, val);
+  analogWrite(RF, val*0.77);
+  analogWrite(LF, 0);
+  analogWrite(RR, 0);
+  delay(moveTime);
+  analogWrite(LR, 0);
+  analogWrite(RF, 0);
+}
+
+void forceRight(uint32_t, float speed)
+{
+  dir = RIGHT;
+  val = pwmVal(speed);
+  analogWrite(RR, val*0.77);
+  analogWrite(LF, val);
+  analogWrite(LR, 0);
+  analogWrite(RF, 0);
+  delay(moveTime);
+  analogWrite(RR, 0);
+  analogWrite(LF, 0);
 }
 
 // Stop Alex. To replace with bare-metal code later.
@@ -415,7 +465,32 @@ void handleCommand(TPacket *command)
       sendOK();
       clearOneCounter(command->params[0]);
       break;
+      
+    case COMMAND_SAFETY:
+        sendOK();
+        ultrasonicSafety = !ultrasonicSafety;
+      break;
 
+    case COMMAND_FORCE_FORWARD:
+        sendOK();
+        forceForward((uint32_t) command->params[0], (float) command->params[1]);
+      break;
+    
+    case COMMAND_FORCE_REVERSE:
+        sendOK();
+        forceReverse((uint32_t) command->params[0], (float) command->params[1]);
+      break;
+    
+    case COMMAND_FORCE_LEFT:
+        sendOK();
+        forceLeft((uint32_t) command->params[0], (float) command->params[1]);
+      break;
+    
+    case COMMAND_FORCE_RIGHT:
+        sendOK();
+        forceRight((uint32_t) command->params[0], (float) command->params[1]);
+      break;
+    
     /*
      * Implement code for other commands here.
      * 
@@ -463,6 +538,7 @@ void waitForHello()
 
 void setup() {
   cli();setupEINT();setupSerial();startSerial();setupMotors();startMotors();enablePullups();initializeState();sei();setupUltrasonic();
+  
 }
 
 void handlePacket(TPacket *packet)
@@ -493,41 +569,32 @@ void setupUltrasonic() {
 }
 
 void checkDistance() {
-  PORTD &= B01111111; // SET PIN 7 LOW (LEFT TRIGGER)
-  delayMicroseconds(5);
-  PORTD |= B10000000; // SET PIN 7 HIGH (LEFT TRIGGER)
-  delayMicroseconds(10);
-  PORTD &= B01111111; // SET PIN 7 LOW (LEFT TRIGGER)
-  DDRB &= B111110; // DECLARE PIN 8 INPUT (LEFT ECHO)
-  frontDuration = pulseIn(8, HIGH);
-  frontDistance = (frontDuration * 0.0343) / 2;
-  if (dir == FORWARD && frontDistance < 5) { // NEED TO IMPLEMENT BOOL SAFETY FIRST
-    stop();
+  if (dir == FORWARD) {
+    PORTB &= B101111; // SET PIN 12 TO LOW (RIGHT TRIGGER)
+    delayMicroseconds(5);
+    PORTB |= B010000; // SET PIN 12 TO HIGH (RIGHT TRIGGER)
+    delayMicroseconds(10);
+    PORTB &= B101111; // SET PIN 12 TO LOW (RIGHT TRIGGER)
+    DDRB &= B011111; // DECLARE PIN 13 AS INPUT RIGHT ECHO
+    frontDuration = pulseIn(13, HIGH);
+    frontDistance = (frontDuration * 0.0343) / 2;
+    if ( frontDistance < 15 && ultrasonicSafety == true) {
+      stop();
+    }
+  } else if (dir == BACKWARD) {
+    PORTD &= B01111111; // SET PIN 7 LOW (LEFT TRIGGER)
+    delayMicroseconds(5);
+    PORTD |= B10000000; // SET PIN 7 HIGH (LEFT TRIGGER)
+    delayMicroseconds(10);
+    PORTD &= B01111111; // SET PIN 7 LOW (LEFT TRIGGER)
+    DDRB &= B111110; // DECLARE PIN 8 INPUT (LEFT ECHO)
+    backDuration = pulseIn(8, HIGH);
+    backDistance = (backDuration * 0.0343) / 2;
+    if (backDistance < 15 && ultrasonicSafety == true) {
+     stop();
+    }
   }
-  
-  Serial.print("Distance from front wall: ");
-  Serial.print(frontDistance);
-  Serial.println("cm.");
-
-  delay(60); // wait for first ping over
-  
-  PORTB &= B101111; // SET PIN 12 TO LOW (RIGHT TRIGGER)
-  delayMicroseconds(5);
-  PORTB |= B010000; // SET PIN 12 TO HIGH (RIGHT TRIGGER)
-  delayMicroseconds(10);
-  PORTB &= B101111; // SET PIN 12 TO LOW (RIGHT TRIGGER)
-  DDRB &= B011111; // DECLARE PIN 13 AS INPUT RIGHT ECHO
-  backDuration = pulseIn(13, HIGH);
-  backDistance = (backDuration * 0.0343) / 2;
-  if (dir == BACKWARD && backDistance < 5) {
-    stop();
-  }
-  
-  Serial.print("Distance from back wall: ");
-  Serial.print(backDistance);
-  Serial.println("cm.");
 }
-
 
 void loop() {
   TPacket recvPacket; 
@@ -543,13 +610,14 @@ void loop() {
         sendBadChecksum();
     } 
   
-  Serial.println(ratio);
+  //Serial.println(ratio);
   if (deltaDist > 0) {
     if (dir == FORWARD) {
       analogWrite(RF, val*ratio);
       if (forwardDist > newDist) {
         deltaDist = 0;
         newDist = 0;
+        
         stop();
       } 
     } else if (dir == BACKWARD) {

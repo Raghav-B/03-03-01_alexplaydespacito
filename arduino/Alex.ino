@@ -1,7 +1,8 @@
 #include <serialize.h>
-
-#include "packet.h"
 #include "constants.h"
+#include "stdint.h"
+#include "packet.h"
+
 
 typedef enum {
   STOP = 0,
@@ -72,7 +73,6 @@ void sendStatus()
   statusPacket.params[7] = rightReverseTicksTurns;
   statusPacket.params[8] = forwardDist;
   statusPacket.params[9] = reverseDist;
-
   sendResponse(&statusPacket);
 }
 
@@ -90,12 +90,10 @@ void sendBadPacket()
   badPacket.packetType = PACKET_TYPE_ERROR;
   badPacket.command = RESP_BAD_PACKET;
   sendResponse(&badPacket);
-  
 }
 
 void sendBadChecksum()
 {
-
   TPacket badChecksum;
   badChecksum.packetType = PACKET_TYPE_ERROR;
   badChecksum.command = RESP_BAD_CHECKSUM;
@@ -108,7 +106,6 @@ void sendBadCommand()
   badCommand.packetType=PACKET_TYPE_ERROR;
   badCommand.command=RESP_BAD_COMMAND;
   sendResponse(&badCommand);
-
 }
 
 void sendBadResponse()
@@ -132,7 +129,6 @@ void sendResponse(TPacket *packet)
   // over the serial port.
   char buffer[PACKET_SIZE];
   int len;
-
   len = serialize(buffer, packet, sizeof(TPacket));
   writeSerial(buffer, len);
 }
@@ -142,6 +138,7 @@ void enablePullups()
 {
   DDRD  &= 0b11110011;PORTD |= 0b00001100;
 }
+
 volatile float ratio = 0.73;
 volatile float error = 0, integral = 0;
 
@@ -200,9 +197,11 @@ void rightISR(){
 void setupEINT(){
   EICRA = 0b00001010; EIMSK = 0b00000011;
 }
+
 ISR(INT0_vect){
   leftISR();
 }
+
 ISR(INT1_vect){
   rightISR();
 }
@@ -223,10 +222,8 @@ void startSerial()
 int readSerial(char *buffer)
 {
   int count=0;
-
   while(Serial.available())
     buffer[count++] = Serial.read();
-
   return count;
 }
 
@@ -327,6 +324,58 @@ void right(float ang, float speed)
   analogWrite(RF, 0);
 }
 
+void forceForward(uint32_t moveTime, float speed)
+{
+  dir = FORWARD;
+  val = pwmVal(speed);
+  analogWrite(LF, val);
+  analogWrite(RF, val*0.73);
+  analogWrite(LR, 0);
+  analogWrite(RR, 0);
+  delay(moveTime);
+  analogWrite(LF, 0);
+  analogWrite(RF, 0);  
+}
+
+void forceReverse(uint32_t moveTime, float speed)
+{
+  dir = BACKWARD;
+  val = pwmVal(speed);
+  analogWrite(LR, val);
+  analogWrite(RR, val*0.73);
+  analogWrite(LF, 0);
+  analogWrite(RF, 0);
+  delay(moveTime);
+  analogWrite(LR, 0);
+  analogWrite(RR, 0);
+}
+
+void forceLeft(uint32_t, float speed)
+{
+  dir = LEFT;
+  val = pwmVal(speed);
+  analogWrite(LR, val);
+  analogWrite(RF, val*0.77);
+  analogWrite(LF, 0);
+  analogWrite(RR, 0);
+  delay(moveTime);
+  analogWrite(LR, 0);
+  analogWrite(RF, 0);
+}
+
+void forceRight(uint32_t, float speed)
+{
+  dir = RIGHT;
+  val = pwmVal(speed);
+  analogWrite(RR, val*0.77);
+  analogWrite(LF, val);
+  analogWrite(LR, 0);
+  analogWrite(RF, 0);
+  delay(moveTime);
+  analogWrite(RR, 0);
+  analogWrite(LF, 0);
+}
+
 // Stop Alex. To replace with bare-metal code later.
 void stop()
 { 
@@ -418,10 +467,30 @@ void handleCommand(TPacket *command)
       break;
       
     case COMMAND_SAFETY:
-      sendOK();
-      ultrasonicSafety = !ultrasonicSafety;
-    break;
+        sendOK();
+        ultrasonicSafety = !ultrasonicSafety;
+      break;
 
+    case COMMAND_FORCE_FORWARD:
+        sendOK();
+        forceForward((uint32_t) command->params[0], (float) command->params[1]);
+      break;
+    
+    case COMMAND_FORCE_REVERSE:
+        sendOK();
+        forceReverse((uint32_t) command->params[0], (float) command->params[1]);
+      break;
+    
+    case COMMAND_FORCE_LEFT:
+        sendOK();
+        forceLeft((uint32_t) command->params[0], (float) command->params[1]);
+      break;
+    
+    case COMMAND_FORCE_RIGHT:
+        sendOK();
+        forceRight((uint32_t) command->params[0], (float) command->params[1]);
+      break;
+    
     /*
      * Implement code for other commands here.
      * 
@@ -500,7 +569,6 @@ void setupUltrasonic() {
 }
 
 void checkDistance() {
-
   if (dir == FORWARD) {
     PORTB &= B101111; // SET PIN 12 TO LOW (RIGHT TRIGGER)
     delayMicroseconds(5);
@@ -527,7 +595,6 @@ void checkDistance() {
     }
   }
 }
-
 
 void loop() {
   TPacket recvPacket; 
