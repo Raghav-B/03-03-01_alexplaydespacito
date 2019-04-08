@@ -30,9 +30,10 @@ sem_t _xmitSema;
  * @return False if invalid, true if valid (and msg will be updated
  * accordingly).
  */
-bool parse_command (const std::string &input, char &command, uint32_t &distance,
+bool parseCommand (const std::string &input, char &command, uint32_t &distance,
 uint32_t &speed) {
-  char validCmds[] = {'P', 'W', 'A', 'S', 'D', 'X', 'G', 'C', 'Q', 'U'};
+  char validCmds[] = {'P', 'W', 'A', 'S', 'D', 'X', 'G', 'C', 'Q', 'U', 'H',
+  'J', 'K', 'L'};
   bool isValid = false;
   std::istringstream detoken(input);
   std::string temp;
@@ -99,6 +100,14 @@ void handleResponse(TPacket *packet) {
   switch(packet->command)	{
     case RESP_OK:
       ROS_INFO("Command OK");
+      break;
+
+    case RESP_SAFETY_ON:
+      ROS_INFO("Safety enabled");
+      break;
+    
+    case RESP_SAFETY_OFF:
+      ROS_INFO("Safety disabled");
       break;
 
     case RESP_STATUS:
@@ -219,7 +228,6 @@ int main(int argc, char **argv) {
 
   ROS_INFO("MAIN NODE STARTED");
 
-
   //pull input from user
   std::string input;
   uint32_t distance, speed;
@@ -227,7 +235,7 @@ int main(int argc, char **argv) {
   while(ros::ok()) {
     std::getline(std::cin, input);
     //std::string original_input = input;
-    if (!parse_command(input, command, distance, speed)) {
+    if (!parseCommand(input, command, distance, speed)) {
       ROS_ERROR("Invalid command.");
     } else {
       TPacket commandPacket;
@@ -298,6 +306,27 @@ int main(int argc, char **argv) {
       } else if (command == 'U') {
         ROS_INFO("Toggling safety")
         commandPacket.command = COMMAND_SAFETY;
+
+      } else if (command == 'K') { // Forward movement
+        ROS_INFO("Forcing forward move");
+        commandPacket.command = COMMAND_FORCE_FORWARD;
+        // Add errors here as well as need be.
+
+      } else if (command == 'J') { // Backward movement
+        ROS_INFO("Forcing reverse move");
+        commandPacket.command = COMMAND_FORCE_REVERSE;
+        // Add errors here as well as need be.
+
+      } else if (command == 'H') { // Left turn
+        ROS_INFO("Forcing left turn");
+        commandPacket.command = COMMAND_FORCE_LEFT;
+        // Add errors here as well as need be.
+
+      } else if (command == 'L') { // Right turn
+        ROS_INFO("Forcing right turn");
+        commandPacket.command = COMMAND_FORCE_RIGHT;
+        // Add errors here as well as need be.
+      
       } else { // Error or unknown command
         valid = false;
         ROS_INFO("Unknown command entered");
