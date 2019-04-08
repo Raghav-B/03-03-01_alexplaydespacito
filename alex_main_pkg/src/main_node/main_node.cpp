@@ -37,7 +37,7 @@ uint32_t &speed) {
   bool isValid = false;
   std::istringstream detoken(input);
   std::string temp;
-  temp = input;
+  detoken >> temp;
   if (temp.size() != 1) return false;
   command = toupper(temp[0]); //extract first character and capitalise
   for (auto &c : validCmds) {
@@ -53,7 +53,7 @@ uint32_t &speed) {
     speed = 0;
     return true;
   } else {
-    detoken >> temp >> distance >> speed;
+    detoken >> distance >> speed;
     if (detoken.fail()) return false;
     return true;
   }
