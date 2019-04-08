@@ -9,10 +9,9 @@
 #include <unistd.h>
 #include <stdint.h>
 #include "../../../arduino/packet.h"
+#include "../../../arduino/constants.h"
 #include "serial.h"
 #include "serialize.h"
-//#include "constants.h"
-#include "../../../arduino/constants.h"
 
 #define PORT_NAME			"/dev/ttyACM0" //TODO verify
 #define BAUD_RATE			B57600
@@ -54,7 +53,7 @@ uint32_t &speed) {
     speed = 0;
     return true;
   } else {
-    detoken >> distance >> speed;
+    detoken >> temp >> distance >> speed;
     if (detoken.fail()) return false;
     return true;
   }
