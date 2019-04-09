@@ -38,7 +38,7 @@ uint32_t &speed) {
   bool isValid = false;
   std::istringstream detoken(input);
   std::string temp;
-  temp = input;
+  detoken >> temp;
   if (temp.size() != 1) return false;
   command = toupper(temp[0]); //extract first character and capitalise
   for (auto &c : validCmds) {
@@ -229,6 +229,7 @@ int main(int argc, char **argv) {
 
   ROS_INFO("MAIN NODE STARTED");
 
+  ros::start();
   ros::Rate loop_rate(10);
 
   //pull input from user
@@ -277,13 +278,13 @@ int main(int argc, char **argv) {
         alex_main_pkg::camera msg;
         ROS_INFO("Starting Colour Detection");
 
-        msg.request.input = "Start detection";
+        msg.request.input = "start detection";
 
         if (client.call(msg)) {
           if (msg.response.output == "Detection failed") {
             ROS_INFO("Unknown detection error");
           } else {
-            ROS_ERROR("%s", msg.response.output.c_str());
+            ROS_INFO("%s", msg.response.output.c_str());
           }
         } else {
           ROS_ERROR("Failed to contact camera_node");
