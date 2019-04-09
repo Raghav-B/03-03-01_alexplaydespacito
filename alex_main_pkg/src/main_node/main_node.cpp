@@ -9,16 +9,12 @@
 #include <unistd.h>
 #include <stdint.h>
 #include "../../../arduino/packet.h"
+#include "../../../arduino/constants.h"
 #include "serial.h"
 #include "serialize.h"
-//#include "constants.h"
-#include "../../../arduino/constants.h"
 
 #define PORT_NAME			"/dev/ttyACM0" //TODO verify
 #define BAUD_RATE			B57600
-
-//TODO make the Arduino recognise the safety switch command, and report its
-//status with telemetry packets
 
 int exitFlag = 0;
 sem_t _xmitSema;
@@ -52,12 +48,19 @@ uint32_t &speed) {
     command == 'Q' || command == 'U') {
     distance = 0;
     speed = 0;
-    return true;
   } else {
-    detoken >> distance >> speed;
-    if (detoken.fail()) return false;
-    return true;
+    detoken >> distance;
+    if (detoken.fail()) {
+      if (command == 'W' || command == 'S' || command == 'J' || command == 'K') distance = 10;
+      else distance = 45;
+      detoken.clear();
+    }
+    detoken >> speed;
+    if (detoken.fail()) {
+      speed = 75;
+    }
   }
+  return true;
 }
 
 //void cli_callback(const std_msgs::String::ConstPtr& msg) {
@@ -87,12 +90,13 @@ void handleStatus(TPacket *packet) {
   ROS_INFO("Right Forward Ticks:\t\t%lu", (unsigned long)packet->params[1]);
   ROS_INFO("Left Reverse Ticks:\t\t%lu", (unsigned long)packet->params[2]);
   ROS_INFO("Right Reverse Ticks:\t\t%lu", (unsigned long)packet->params[3]);
-  ROS_INFO("Left Forward Ticks Turns:\t\t%lu", (unsigned long)packet->params[4]);
-  ROS_INFO("Right Forward Ticks Turns:\t\t%lu", (unsigned long)packet->params[5]);
-  ROS_INFO("Left Reverse Ticks Turns:\t\t%lu", (unsigned long)packet->params[6]);
-  ROS_INFO("Right Reverse Ticks Turns:\t\t%lu", (unsigned long)packet->params[7]);
+  ROS_INFO("Left Forward Ticks Turns:\t%lu", (unsigned long)packet->params[4]);
+  ROS_INFO("Right Forward Ticks Turns:\t%lu", (unsigned long)packet->params[5]);
+  ROS_INFO("Left Reverse Ticks Turns:\t%lu", (unsigned long)packet->params[6]);
+  ROS_INFO("Right Reverse Ticks Turns:\t%lu", (unsigned long)packet->params[7]);
   ROS_INFO("Forward Distance:\t\t%lu", (unsigned long)packet->params[8]);
   ROS_INFO("Reverse Distance:\t\t%lu", (unsigned long)packet->params[9]);
+  ROS_INFO("PID Ratio:\t\t%lu", (unsigned long)packet->params[10]);
   ROS_INFO("---------------------------------------\n");
 }
 

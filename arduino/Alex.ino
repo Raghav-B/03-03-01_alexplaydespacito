@@ -1,7 +1,8 @@
-#include <serialize.h>
 #include "constants.h"
-#include "stdint.h"
 #include "packet.h"
+#include "serialize.h"
+#include <stdint.h>
+#include <math.h>
 
 
 typedef enum {
@@ -136,15 +137,12 @@ void sendResponse(TPacket *packet)
 // Enable pull up resistors on pins 2 and 3
 void enablePullups()
 {
-  DDRD  &= 0b11110011;PORTD |= 0b00001100;
+  DDRD &= 0b11110011; PORTD |= 0b00001100;
 }
 
 volatile float ratio = 0.73;
 volatile float error = 0, integral = 0;
-
 const float Kp = -0.002, Ki = -0.0001;
-
-
 volatile int leftPICount = 0;
 volatile int rightPICount = 0;
 volatile unsigned long leftDegrees, rightDegrees;
@@ -159,10 +157,8 @@ void leftISR(){
     forwardDist = (unsigned long)((((float) ++leftForwardTicks )/COUNTS_PER_REV)*WHEEL_CIRC);
   else if (dir == BACKWARD)
     reverseDist = (unsigned long)(((float) ++leftReverseTicks ) / COUNTS_PER_REV * WHEEL_CIRC);
-  else if (dir == LEFT) 
-    leftReverseTicksTurns++;
-  else if (dir == RIGHT) 
-    leftForwardTicksTurns++;
+  else if (dir == LEFT) leftReverseTicksTurns++;
+  else if (dir == RIGHT) leftForwardTicksTurns++;
   if (leftPICount == 50) {
       if (dir == FORWARD|| dir == BACKWARD) {
         error = rightPICount - leftPICount;
@@ -175,48 +171,49 @@ void leftISR(){
 
 void rightISR(){
   rightPICount++;
-  if (dir == FORWARD)
-    rightForwardTicks++;// forwardDist = (unsigned long)((float) ++rightForwardTicks  / COUNTS_PER_REV * WHEEL_CIRC);
-  else if (dir == BACKWARD)
-    rightReverseTicks++;
-  else if (dir == LEFT) 
-    rightForwardTicksTurns++;
-  else if (dir == RIGHT) 
-    rightReverseTicksTurns++;
-    if (rightPICount == 50) {
-      if (dir == FORWARD|| dir == BACKWARD) {
-        error = rightPICount - leftPICount;
-        integral +=  error;
-        ratio += (error*Kp < -0.01? error*Kp:-0.01) + integral*Ki;
-     }
-     rightPICount = leftPICount = 0;
-   }
-
+  if (dir == FORWARD) rightForwardTicks++;
+  // forwardDist = (unsigned long)((float) ++rightForwardTicks  / COUNTS_PER_REV * WHEEL_CIRC);
+  else if (dir == BACKWARD) rightReverseTicks++;
+  else if (dir == LEFT) rightForwardTicksTurns++;
+  else if (dir == RIGHT) rightReverseTicksTurns++;
+  if (rightPICount == 50) {
+    if (dir == FORWARD|| dir == BACKWARD) {
+      error = rightPICount - leftPICount;
+      integral +=  error;
+      ratio += (error*Kp < -0.01? error*Kp:-0.01) + integral*Ki;
+    }
+    rightPICount = leftPICount = 0;
+  }
 }
 
-void setupEINT(){
+void setupEINT() {
   EICRA = 0b00001010; EIMSK = 0b00000011;
 }
 
-ISR(INT0_vect){
+ISR(INT0_vect) {
   leftISR();
 }
 
-ISR(INT1_vect){
+ISR(INT1_vect) {
   rightISR();
 }
 
-void setupSerial()
-{
+void setupSerial() {
   // To replace later with bare-metal.
+  /*
   Serial.begin(57600);
+  UCSR0C = 0b00000011; //asynchronous, 8N1
+  //for Baud rate of 57600 with 16 MHz clock speed, b = 16
+  unsigned int b = 16;
+  UBRR0H = (unsigned char) (b >> 8);
+  UBRR0L = (unsigned char) b;
+  */
 }
 
-void startSerial()
-{
+void startSerial() {
   // Empty for now. To be replaced with bare-metal code
   // later on.
-  
+
 }
 
 int readSerial(char *buffer)
@@ -250,7 +247,7 @@ void setupMotors()
 // blank.
 void startMotors()
 {
-  
+
 }
 
 // Convert percentages to PWM values
@@ -404,7 +401,7 @@ void stop()
   analogWrite(RF, 0);
   analogWrite(LR, 0);
   analogWrite(RR, 0);
-  
+
 }
 
 void clearCounters()
@@ -438,24 +435,24 @@ void handleCommand(TPacket *command)
   {
     // For movement commands, param[0] = distance, param[1] = speed.
     case COMMAND_FORWARD:
-        sendOK();
-        forward((float) command->params[0], (float) command->params[1]);
+      sendOK();
+      forward((float) command->params[0], (float) command->params[1]);
       break;
     case COMMAND_REVERSE:
-        sendOK();
-        reverse((float) command->params[0], (float) command->params[1]);
+      sendOK();
+      reverse((float) command->params[0], (float) command->params[1]);
       break;
     case COMMAND_TURN_LEFT:
-        sendOK();
-        left((float) command->params[0], (float) command->params[1]);
+      sendOK();
+      left((float) command->params[0], (float) command->params[1]);
       break;
     case COMMAND_TURN_RIGHT:
-        sendOK();
-        right((float) command->params[0], (float) command->params[1]);
+      sendOK();
+      right((float) command->params[0], (float) command->params[1]);
       break;
     case COMMAND_STOP:
-        sendOK();
-        forward(0,0);
+      sendOK();
+      forward(0,0);
       break;
     case COMMAND_GET_STATS:
       sendStatus();
@@ -465,37 +462,37 @@ void handleCommand(TPacket *command)
       sendOK();
       clearOneCounter(command->params[0]);
       break;
-      
+
     case COMMAND_SAFETY:
-        sendOK();
-        ultrasonicSafety = !ultrasonicSafety;
+      sendOK();
+      ultrasonicSafety = !ultrasonicSafety;
       break;
 
     case COMMAND_FORCE_FORWARD:
-        sendOK();
-        forceForward((uint32_t) command->params[0], (float) command->params[1]);
+      sendOK();
+      forceForward((uint32_t) command->params[0], (float) command->params[1]);
       break;
-    
+
     case COMMAND_FORCE_REVERSE:
-        sendOK();
-        forceReverse((uint32_t) command->params[0], (float) command->params[1]);
+      sendOK();
+      forceReverse((uint32_t) command->params[0], (float) command->params[1]);
       break;
-    
+
     case COMMAND_FORCE_LEFT:
-        sendOK();
-        forceLeft((uint32_t) command->params[0], (float) command->params[1]);
+      sendOK();
+      forceLeft((uint32_t) command->params[0], (float) command->params[1]);
       break;
-    
+
     case COMMAND_FORCE_RIGHT:
-        sendOK();
-        forceRight((uint32_t) command->params[0], (float) command->params[1]);
+      sendOK();
+      forceRight((uint32_t) command->params[0], (float) command->params[1]);
       break;
-    
-    /*
-     * Implement code for other commands here.
-     * 
-     */
-        
+
+      /*
+       * Implement code for other commands here.
+       * 
+       */
+
     default:
       sendBadCommand();
   }
@@ -509,7 +506,7 @@ void waitForHello()
   {
     TPacket hello;
     TResult result;
-    
+
     do
     {
       result = readPacket(&hello);
@@ -538,7 +535,7 @@ void waitForHello()
 
 void setup() {
   cli();setupEINT();setupSerial();startSerial();setupMotors();startMotors();enablePullups();initializeState();sei();setupUltrasonic();
-  
+
 }
 
 void handlePacket(TPacket *packet)
@@ -591,7 +588,7 @@ void checkDistance() {
     backDuration = pulseIn(8, HIGH);
     backDistance = (backDuration * 0.0343) / 2;
     if (backDistance < 15 && ultrasonicSafety == true) {
-     stop();
+      stop();
     }
   }
 }
@@ -599,7 +596,7 @@ void checkDistance() {
 void loop() {
   TPacket recvPacket; 
   TResult result = readPacket(&recvPacket);
-  
+
   if(result == PACKET_OK)
     handlePacket(&recvPacket);
   else
@@ -607,9 +604,9 @@ void loop() {
       sendBadPacket();
     }
     else if(result == PACKET_CHECKSUM_BAD){
-        sendBadChecksum();
+      sendBadChecksum();
     } 
-  
+
   //Serial.println(ratio);
   if (deltaDist > 0) {
     if (dir == FORWARD) {
@@ -617,7 +614,7 @@ void loop() {
       if (forwardDist > newDist) {
         deltaDist = 0;
         newDist = 0;
-        
+
         stop();
       } 
     } else if (dir == BACKWARD) {
@@ -658,5 +655,5 @@ void loop() {
   if (dir == FORWARD || dir == BACKWARD) {
     checkDistance();
   }
-  
+
 }
