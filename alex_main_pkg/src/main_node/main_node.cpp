@@ -8,8 +8,8 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <stdint.h>
-#include "../../../arduino/packet.h"
-#include "../../../arduino/constants.h"
+#include "../../../arduino/Alex/packet.h"
+#include "../../../arduino/Alex/constants.h"
 #include "serial.h"
 #include "serialize.h"
 
