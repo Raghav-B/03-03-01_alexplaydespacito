@@ -3,7 +3,6 @@
 #include "stdint.h"
 #include "packet.h"
 
-
 typedef enum {
   STOP = 0,
   FORWARD = 1,
@@ -146,7 +145,6 @@ volatile float error = 0, integral = 0;
 
 const float Kp = -0.002, Ki = -0.0001;
 
-
 volatile int leftPICount = 0;
 volatile int rightPICount = 0;
 volatile unsigned long leftDegrees, rightDegrees;
@@ -218,7 +216,6 @@ void startSerial()
 {
   // Empty for now. To be replaced with bare-metal code
   // later on.
-  
 }
 
 int readSerial(char *buffer)
@@ -320,8 +317,8 @@ void right(float ang, float speed)
 
   deltaTicks = degreesToTicks(ang);
   targetTicks = rightReverseTicksTurns + deltaTicks;
-  analogWrite(RR, val*0.77);
   analogWrite(LF, val);
+  analogWrite(RR, val*0.77);
   analogWrite(LR, 0);
   analogWrite(RF, 0);
 }
@@ -369,13 +366,13 @@ void forceRight(uint32_t moveTime, float speed)
 {
   dir = RIGHT;
   val = pwmVal(speed);
-  analogWrite(RR, val*0.77);
   analogWrite(LF, val);
+  analogWrite(RR, val*0.77);
   analogWrite(LR, 0);
   analogWrite(RF, 0);
   delay(moveTime);
-  analogWrite(RR, 0);
   analogWrite(LF, 0);
+  analogWrite(RR, 0);
 }
 
 // Stop Alex. To replace with bare-metal code later.
@@ -664,4 +661,3 @@ void loop() {
   }
   
 }
-
