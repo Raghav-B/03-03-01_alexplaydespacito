@@ -150,7 +150,7 @@ volatile int rightPICount = 0;
 volatile unsigned long leftDegrees, rightDegrees;
 
 int degreesToTicks(int deg) {
-  int dist = deg/360.0 * 31.4;  return (dist*COUNTS_PER_REV/WHEEL_CIRC);
+  float dist = deg/360.0 * 31.4;  return ceil((dist*COUNTS_PER_REV/WHEEL_CIRC));
 }
 
 void leftISR(){
