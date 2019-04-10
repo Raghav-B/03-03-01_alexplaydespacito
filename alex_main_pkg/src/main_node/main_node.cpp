@@ -52,12 +52,13 @@ uint32_t &speed) {
     detoken >> distance;
     if (detoken.fail()) {
       if (command == 'W' || command == 'S' || command == 'J' || command == 'K') distance = 10;
-      else distance = 45;
+      else distance = 15;
       detoken.clear();
     }
     detoken >> speed;
     if (detoken.fail()) {
-      speed = 75;
+      if (command == 'W' || command == 'S' || command == 'J' || command == 'K') speed = 75;
+      else speed = 100;
     }
   }
   return true;
