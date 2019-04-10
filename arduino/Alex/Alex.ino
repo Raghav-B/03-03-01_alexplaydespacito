@@ -468,8 +468,12 @@ void handleCommand(TPacket *command)
       break;
       
     case COMMAND_SAFETY:
-        sendOK();
         ultrasonicSafety = !ultrasonicSafety;
+        TPacket safePacket;
+        safePacket.packetType = PACKET_TYPE_RESPONSE;
+        if (ultrasonicSafety) safePacket.command = RESP_SAFETY_ON;
+        else safePacket.command = RESP_SAFETY_OFF;
+        sendResponse(&safePacket);  
       break;
 
     case COMMAND_FORCE_FORWARD:
