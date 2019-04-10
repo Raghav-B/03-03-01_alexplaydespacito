@@ -610,7 +610,7 @@ void checkDistance() {
     DDRB &= B111110; // DECLARE PIN 8 INPUT (LEFT ECHO)
     backDuration = pulseIn(8, HIGH);
     backDistance = (backDuration * 0.0343) / 2;
-    if (backDistance < 5) {
+    if (backDistance < 5 ) {
      stop();
      sendMessage("Obstacle detected behind!");
     }
