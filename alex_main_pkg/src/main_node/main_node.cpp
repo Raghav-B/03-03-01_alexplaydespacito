@@ -340,6 +340,8 @@ int main(int argc, char **argv) {
         ROS_INFO("Unknown command entered");
       }
 
+      ROS_INFO("Distance = %lu, speed = %lu", distance, speed);
+
       if (valid) sendPacket(&commandPacket);
     }
     ros::spinOnce();
