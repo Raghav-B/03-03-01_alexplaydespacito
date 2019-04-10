@@ -583,8 +583,9 @@ void checkDistance() {
     DDRB &= B011111; // DECLARE PIN 13 AS INPUT RIGHT ECHO
     frontDuration = pulseIn(13, HIGH);
     frontDistance = (frontDuration * 0.0343) / 2;
-    if ( frontDistance < 15 && ultrasonicSafety == true) {
+    if ( frontDistance < 15 ) {
       stop();
+      sendMessage("Obstacle detected in front!");
     }
   } else if (dir == BACKWARD) {
     PORTD &= B01111111; // SET PIN 7 LOW (LEFT TRIGGER)
@@ -595,8 +596,9 @@ void checkDistance() {
     DDRB &= B111110; // DECLARE PIN 8 INPUT (LEFT ECHO)
     backDuration = pulseIn(8, HIGH);
     backDistance = (backDuration * 0.0343) / 2;
-    if (backDistance < 15 && ultrasonicSafety == true) {
+    if (backDistance < 15 ) {
      stop();
+     sendMessage("Obstacle detected behind!");
     }
   }
 }
@@ -661,7 +663,7 @@ void loop() {
   }
 
   if (dir == FORWARD || dir == BACKWARD) {
-    checkDistance();
+    if (ultrasoniceSafety) checkDistance();
   }
   
 }
