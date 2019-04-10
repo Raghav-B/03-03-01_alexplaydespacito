@@ -583,7 +583,7 @@ void checkDistance() {
     DDRB &= B011111; // DECLARE PIN 13 AS INPUT RIGHT ECHO
     frontDuration = pulseIn(13, HIGH);
     frontDistance = (frontDuration * 0.0343) / 2;
-    if ( frontDistance < 15 ) {
+    if ( frontDistance < 10 ) {
       stop();
       sendMessage("Obstacle detected in front!");
     }
@@ -596,7 +596,7 @@ void checkDistance() {
     DDRB &= B111110; // DECLARE PIN 8 INPUT (LEFT ECHO)
     backDuration = pulseIn(8, HIGH);
     backDistance = (backDuration * 0.0343) / 2;
-    if (backDistance < 15 ) {
+    if (backDistance < 5 ) {
      stop();
      sendMessage("Obstacle detected behind!");
     }
