@@ -98,31 +98,15 @@ bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Resp
         }
     }
 
-    // draw the frame with the contour and the mask for debugging
-    /*
-    imwrite(imageName, frame);
-    cv::imshow("frame", frame);
-    cv::waitKey(0);
-    if (blue_found) {
-        std::cout << "Blue found" << std::endl;
-    } else {
-        std::cout << "Blue not found" << std::endl;
-    }
-
-    if (red_found) {
-        std::cout << "Red found" << std::endl;
-    } else {
-        std::cout << "Red not found" << std::endl;
-    }
-    */
-
     if (req.input == "start detection") {
         if (blue_found && red_found) {
             res.output = "Red and Blue Detected";
         } else if (blue_found) {
             res.output = "Blue Detected";
-        } else {
+        } else if (red_found) {
             res.output = "Red Detected";
+        } else {
+            res.output = "No Color Detected";
         }
     } else {
         res.output = "Detection Failed";
