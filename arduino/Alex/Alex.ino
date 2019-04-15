@@ -1,3 +1,5 @@
+
+
 #include <serialize.h>
 #include "constants.h"
 #include "stdint.h"
@@ -57,7 +59,7 @@ TResult readPacket(TPacket *packet)
       return deserialize(buffer, len, packet); 
 }
 
-volatile float ratio = 0.73;
+volatile float ratio = 0.75;
 
 void sendStatus()
 {
@@ -305,7 +307,7 @@ void left(float ang, float speed)
   deltaTicks = degreesToTicks(ang);
   targetTicks = leftReverseTicksTurns + deltaTicks;
   analogWrite(LR, val);
-  analogWrite(RF, val*0.77);
+  analogWrite(RF, val*0.9);
   analogWrite(LF, 0);
   analogWrite(RR, 0);
 }
@@ -583,7 +585,7 @@ void checkDistance() {
     DDRB &= B011111; // DECLARE PIN 13 AS INPUT RIGHT ECHO
     frontDuration = pulseIn(13, HIGH);
     frontDistance = (frontDuration * 0.0343) / 2;
-    if ( frontDistance < 15 ) {
+    if (frontDistance < 7) {
       stop();
       sendMessage("Obstacle detected in front!");
     }
@@ -596,7 +598,7 @@ void checkDistance() {
     DDRB &= B111110; // DECLARE PIN 8 INPUT (LEFT ECHO)
     backDuration = pulseIn(8, HIGH);
     backDistance = (backDuration * 0.0343) / 2;
-    if (backDistance < 15 ) {
+    if (backDistance < 5) {
      stop();
      sendMessage("Obstacle detected behind!");
     }
@@ -663,7 +665,7 @@ void loop() {
   }
 
   if (dir == FORWARD || dir == BACKWARD) {
-    if (ultrasoniceSafety) checkDistance();
+    if (ultrasonicSafety) checkDistance();
   }
   
 }
