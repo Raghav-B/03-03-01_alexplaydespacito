@@ -1,3 +1,6 @@
-*/build/*
+*build/*
 *beginner_tutorials*
 .vscode/
+/certs/*
+*.key
+*.swp
