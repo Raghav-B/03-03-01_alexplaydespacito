@@ -15,7 +15,8 @@ cv::Scalar lower_green = cv::Scalar(40, 70, 100);
 cv::Scalar higher_green = cv::Scalar(70, 140, 170);
 
 // area has to greater than the threshold to be detected 
-long area_threshold = 1000;
+long area_threshold = 5000;
+long area_max_threshold = 10000;
 
 bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Response &res) {
     std::system("raspistill -o photo.jpg");
@@ -48,6 +49,12 @@ bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Resp
     long largest_area_red = 0;
     long largest_contour_red_index = 0;
 
+    // moments for largest red contour
+    cv::Moments m_red;
+
+    // centroid for largest red contour
+    cv::Point2f c_red;
+
     // check for existing of contors before finding the largest
     if (contours.size()) {
 
@@ -66,6 +73,8 @@ bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Resp
             cv::Scalar color = cv::Scalar(0, 255, 0);
             cv::drawContours(frame, contours, largest_contour_red_index, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
             red_found = true;
+            m_red = cv::moments(contours[largest_contour_red_index], false);
+            c_red = cv::Point2f( m_red.m10/m.m00 , m_red.m01/m.m00 );
         }
     }
 
@@ -76,6 +85,12 @@ bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Resp
     cv::findContours(mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
     long largest_area_green = 0;
     long largest_contour_green_index = 0;
+
+    // moments for largest green contour
+    cv::Moments m_green;
+
+    // centroid for largest green contour
+    cv::Point2f c_green;
 
     // check for existing of contors before finding the largest
     if (contours.size()) {
@@ -95,23 +110,72 @@ bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Resp
             cv::Scalar color = cv::Scalar(0, 255, 0);
             cv::drawContours(frame, contours, largest_contour_green_index, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
             green_found = true;
+            m_green = cv::moments(contours[largest_contour_green_index], false);
+            c_green = cv::Point2f( m_green.m10/m.m00 , m_green.m01/m.m00 );
         }
     }
 
     if (req.input == "start detection") {
+
+        long left_bar = frame.cols * 2 / 3;
+        long right_bar = frame.cols / 3;
+
+        std::string red_msg = "";
+        if (red_found) {
+
+            // check for red position
+            if (c_red.x > left_bar) {
+                red_msg += "Red on left. ";
+            } else if (c_red.x > right_bar) {
+                red_msg += "Red on middle. ";
+            } else {
+                red_msg += "Red on right. ";
+            }
+
+            // check for red distance
+            if (largest_area_red < area_max_threshold) {
+                red_msg += "Red is far. ";
+            } else {
+                red_msg += "Red is close. ";
+            }
+        }
+        
+        std::string green_msg = "";
+        if (green_found) {
+
+            // check for green position
+            if (c_green.x > left_bar) {
+                green_msg += "Green on left. ";
+            } else if (c.x > right_bar) {
+                green_msg += "Green on middle. ";
+            } else {
+                green_msg += "Green on right. ";
+            }
+
+            // check for green distance
+            if (largest_area_green < area_max_threshold) {
+                green_msg += "Green is far. ";
+            } else {
+                green_msg += "Green is close. ";
+            }
+
+        }
+
+        // output message
         if (green_found && red_found) {
-            res.output = "Red and Green Detected";
+            res.output = "Red and Green Detected. " + red_msg + green_msg;
         } else if (green_found) {
-            res.output = "Green Detected";
+            res.output = "Green Detected. " + green_msg;
         } else if (red_found) {
-            res.output = "Red Detected";
+            res.output = "Red Detected. " + red_msg;
         } else {
             res.output = "No Color Detected";
         }
+
     } else {
         res.output = "Detection Failed";
     }
-    
+
     return true;
 }
 
@@ -125,5 +189,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-
-
