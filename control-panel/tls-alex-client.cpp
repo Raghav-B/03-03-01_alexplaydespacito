@@ -180,56 +180,27 @@ void *readerThread(void *conn) {
     if (networkActive) handleNetwork(buffer, len);
   }
   printf("Exiting network listener thread\n");
-  /* TODO: Stop the client loop and call EXIT_THREAD */
   EXIT_THREAD(conn);
-
-  /* END TODO */
 }
 
 void *writerThread(void *conn) {
   int quit=0;
+  std::string input;
   while(!quit) {
-    char ch;
     char buffer[10];
-    int32_t params[2];
-
+    uint32_t params[2];
     buffer[0] = NET_COMMAND_PACKET;
-    switch(ch)
-    {
-      case 'f':
-      case 'F':
-      case 'b':
-      case 'B':
-      case 'l':
-      case 'L':
-      case 'r':
-      case 'R':
-        getParams(params);
-        buffer[1] = ch;
-        memcpy(&buffer[2], params, sizeof(params));
-        sendData(conn, buffer, sizeof(buffer));
-        break;
-      case 's':
-      case 'S':
-      case 'c':
-      case 'C':
-      case 'g':
-      case 'G':
-        params[0]=0;
-        params[1]=0;
-        memcpy(&buffer[2], params, sizeof(params));
-        buffer[1] = ch;
-        sendData(conn, buffer, sizeof(buffer));
-        break;
-      case 'q':
-      case 'Q':
-        quit=1;
-        break;
-      default:
-        printf("BAD COMMAND\n");
+    std::getline(std::cin, input);
+    if (input == "") continue;
+    if (!parseCommand(input, buffer[1], params[0], params[1])) {
+      printf("Invalid command.\n");
+    } else if (command == 'Q') {
+      quit = true;
+    } else {
+      memcpy(&buffer[2], params, sizeof(params));
+      sendData(conn, buffer, sizeof(buffer));
     }
   }
-
   printf("Exiting keyboard thread\n");
   EXIT_THREAD(conn);
 }
