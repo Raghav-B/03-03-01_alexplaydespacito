@@ -3,6 +3,7 @@
 #include <serialize.h>
 #include "constants.h"
 #include "stdint.h"
+#include <avr/wdt.h>
 #include "packet.h"
 
 typedef enum {
@@ -47,6 +48,9 @@ volatile unsigned long newDist;
 // Variables for ultrasonic sensor
 long frontDuration, frontDistance, backDuration, backDistance;
 bool ultrasonicSafety = true;
+bool rst = false;
+
+void(* resetFunc) (void) = 0;
 
 TResult readPacket(TPacket *packet)
 {
@@ -60,6 +64,11 @@ TResult readPacket(TPacket *packet)
 }
 
 volatile float ratio = 0.75;
+
+void watchdog() {
+  wdt_enable(WDTO_15MS);
+  while(1);
+}
 
 void sendStatus()
 {
@@ -89,11 +98,13 @@ void sendMessage(const char *message)
 }
 
 void sendBadPacket()
-{
+{ 
+  
   TPacket badPacket;
   badPacket.packetType = PACKET_TYPE_ERROR;
   badPacket.command = RESP_BAD_PACKET;
   sendResponse(&badPacket);
+   rst = true;
 }
 
 void sendBadChecksum()
@@ -101,7 +112,8 @@ void sendBadChecksum()
   TPacket badChecksum;
   badChecksum.packetType = PACKET_TYPE_ERROR;
   badChecksum.command = RESP_BAD_CHECKSUM;
-  sendResponse(&badChecksum);  
+  sendResponse(&badChecksum);
+  rst = true;
 }
 
 void sendBadCommand()
@@ -611,14 +623,15 @@ void loop() {
   
   if(result == PACKET_OK)
     handlePacket(&recvPacket);
-  else
+  else {
+   // resetFunc();
     if(result == PACKET_BAD){
       sendBadPacket();
     }
     else if(result == PACKET_CHECKSUM_BAD){
         sendBadChecksum();
     } 
-  
+  }
   //Serial.println(ratio);
   if (deltaDist > 0) {
     if (dir == FORWARD) {
@@ -667,5 +680,8 @@ void loop() {
   if (dir == FORWARD || dir == BACKWARD) {
     if (ultrasonicSafety) checkDistance();
   }
+
+  if (rst) watchdog();
+
   
 }
