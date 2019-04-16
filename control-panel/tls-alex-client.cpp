@@ -16,6 +16,7 @@
 #define CLIENT_CERT_FNAME "laptop.crt"
 #define CLIENT_KEY_FNAME "laptop.key"
 #define SERVER_NAME_ON_CERT "alex.play.despacito"
+#define BUF_LEN 129
 
 // Tells us that the network is running.
 static volatile int networkActive=0;
@@ -107,40 +108,37 @@ void handleError(const char *buffer)
 
 void handleStatus(const char *buffer)
 {
-  int32_t data[16];
+  uint32_t data[16];
   memcpy(data, &buffer[1], sizeof(data));
 
   printf("\n ------- ALEX STATUS REPORT ------- \n\n");
-  printf("Left Forward Ticks:\t\t%d\n", data[0]);
-  printf("Right Forward Ticks:\t\t%d\n", data[1]);
-  printf("Left Reverse Ticks:\t\t%d\n", data[2]);
-  printf("Right Reverse Ticks:\t\t%d\n", data[3]);
-  printf("Left Forward Ticks Turns:\t%d\n", data[4]);
-  printf("Right Forward Ticks Turns:\t%d\n", data[5]);
-  printf("Left Reverse Ticks Turns:\t%d\n", data[6]);
-  printf("Right Reverse Ticks Turns:\t%d\n", data[7]);
-  printf("Forward Distance:\t\t%d\n", data[8]);
-  printf("Reverse Distance:\t\t%d\n", data[9]);
+  printf("Left Forward Ticks:\t\t%lu\n", (unsigned long) data[0]);
+  printf("Right Forward Ticks:\t\t%lu\n", (unsigned long) data[1]);
+  printf("Left Reverse Ticks:\t\t%lu\n", (unsigned long) data[2]);
+  printf("Right Reverse Ticks:\t\t%lu\n", (unsigned long) data[3]);
+  printf("Left Forward Ticks Turns:\t%lu\n", (unsigned long) data[4]);
+  printf("Right Forward Ticks Turns:\t%lu\n", (unsigned long) data[5]);
+  printf("Left Reverse Ticks Turns:\t%lu\n", (unsigned long) data[6]);
+  printf("Right Reverse Ticks Turns:\t%lu\n", (unsigned long) data[7]);
+  printf("Forward Distance:\t\t%lu\n", (unsigned long) data[8]);
+  printf("Reverse Distance:\t\t%lu\n", (unsigned long) data[9]);
+  printf("PID Ratio:\t\t%lu\n", (unsigned long) data[10]);
   printf("\n---------------------------------------\n\n");
 }
 
-void handleMessage(const char *buffer)
-{
+void handleMessage(const char *buffer) {
   printf("MESSAGE FROM ALEX: %s\n", &buffer[1]);
 }
 
-void handleCommand(const char *buffer)
-{
+void handleCommand(const char *buffer) {
   // We don't do anything because we issue commands
   // but we don't get them. Put this here
   // for future expansion
 }
 
-void handleNetwork(const char *buffer, int len)
-{
+void handleNetwork(const char *buffer, int len) {
   // The first byte is the packet type
   int type = buffer[0];
-
   switch(type)
   {
     case NET_ERROR_PACKET:
@@ -171,11 +169,10 @@ void sendData(void *conn, const char *buffer, int len) {
 }
 
 void *readerThread(void *conn) {
-  char buffer[128];
+  char buffer[BUF_LEN];
   int len;
-
   while (networkActive)	{
-    len = sslRead(conn, buffer, 128);
+    len = sslRead(conn, buffer, BUF_LEN);
     printf("read %d bytes from server.\n", len);
     networkActive = (len > 0);
     if (networkActive) handleNetwork(buffer, len);
@@ -187,12 +184,12 @@ void *readerThread(void *conn) {
 void *writerThread(void *conn) {
   int quit=0;
   std::string input;
-  while(!quit) {
+  while (!quit) {
+    std::getline(std::cin, input);
+    if (input == "\n" || input == "") continue;
     char buffer[10];
     uint32_t params[2];
     buffer[0] = NET_COMMAND_PACKET;
-    std::getline(std::cin, input);
-    if (input == "") continue;
     if (!parseCommand(input, buffer[1], params[0], params[1])) {
       printf("Invalid command.\n");
     } else if (buffer[1] == 'Q') {
@@ -218,6 +215,6 @@ int main(int ac, char **av) {
   }
   networkActive = 1;
   connectToServer(av[1], atoi(av[2]));
-  while (networkActive); //keep running while the network is up
+  while (client_is_running()); //keep running while the network is up
   printf("\nMAIN exiting\n\n");
 }

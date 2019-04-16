@@ -48,6 +48,19 @@ static void *tls_conn = NULL;
 // Prototype for sendNetworkData
 void sendNetworkData(const char *, int);
 
+// To send message from other nodes to operator
+void sendMessage(const std::string message) {
+  char data[129];
+  if (message.size() > 127) { //account for null byte
+    printf("MESSAGE TOO LONG!\n");
+    return;
+  }
+  printf("SENDING MESSAGE TO OPERATOR: %s\n", message.c_str());
+  data[0] = NET_MESSAGE_PACKET;
+  memcpy(&data[1], message.c_str(), message.size() + 1);
+  sendNetworkData(data, sizeof(data));
+}
+
 void handleErrorResponse(TPacket *packet) {
   printf("UART ERROR: %d\n", packet->command);
   char buffer[2];
@@ -122,15 +135,13 @@ void handleUARTPacket(TPacket *packet) {
   }
 }
 
-
 void uartSendPacket(TPacket *packet) {
   char buffer[PACKET_SIZE];
   int len = serialize(buffer, packet, sizeof(TPacket));
   serialWrite(buffer, len);
 }
 
-void handleError(TResult error)
-{
+void handleError(TResult error) {
   switch(error) {
     case PACKET_BAD:
       printf("ERROR: Bad Magic Number\n");
@@ -184,7 +195,6 @@ void sendNetworkData(const char *data, int len) {
     if (tls_conn != NULL) {
       c = sslWrite(tls_conn, data, len);
     }
-
     // Network is still active if we can write more then 0 bytes.
     networkActive = (c > 0);
   }
@@ -206,62 +216,62 @@ void handleCommand(void *conn, const char *buffer) {
 
   switch(cmd) {
     case 'W':
-      ROS_INFO("Moving forward");
+      sendMessage("Moving forward");
       commandPacket.command = COMMAND_FORWARD;
       break;
 
     case 'A':
-      ROS_INFO("Turning left");
+      sendMessage("Turning left");
       commandPacket.command = COMMAND_TURN_LEFT;
       break;
 
     case 'S':
-      ROS_INFO("Moving back");
+      sendMessage("Moving back");
       commandPacket.command = COMMAND_REVERSE;
       break;
 
     case 'D':
-      ROS_INFO("Turning right");
+      sendMessage("Turning right");
       commandPacket.command = COMMAND_TURN_RIGHT;
       break;
 
     case 'X':
-      ROS_INFO("Halting");
+      sendMessage("Halting");
       commandPacket.command = COMMAND_STOP;
       break;
 
     case 'C':
-      ROS_INFO("Clearing telemetry counters");
+      sendMessage("Clearing telemetry counters");
       commandPacket.command = COMMAND_CLEAR_STATS;
       break;
 
     case 'G':
-      ROS_INFO("Fetching telemetry counters");
+      sendMessage("Fetching telemetry counters");
       commandPacket.command = COMMAND_GET_STATS;
       break;
 
     case 'U':
-      ROS_INFO("Toggling safety");
+      sendMessage("Toggling safety");
       commandPacket.command = COMMAND_SAFETY;
       break;
 
     case 'K':
-      ROS_INFO("Forcing forward move");
+      sendMessage("Forcing forward move");
       commandPacket.command = COMMAND_FORCE_FORWARD;
       break;
 
     case 'J':
-      ROS_INFO("Forcing reverse move");
+      sendMessage("Forcing reverse move");
       commandPacket.command = COMMAND_FORCE_REVERSE;
       break;
 
     case 'H':
-      ROS_INFO("Forcing left turn");
+      sendMessage("Forcing left turn");
       commandPacket.command = COMMAND_FORCE_LEFT;
       break;
 
     case 'L':
-      ROS_INFO("Forcing right turn");
+      sendMessage("Forcing right turn");
       commandPacket.command = COMMAND_FORCE_RIGHT;
       break;
 
@@ -269,24 +279,23 @@ void handleCommand(void *conn, const char *buffer) {
       ros::NodeHandle camera_command_handle;
       ros::ServiceClient client = camera_command_handle.serviceClient<alex_main_pkg::camera>("take_photo");
       alex_main_pkg::camera msg;
-      ROS_INFO("Starting Colour Detection");
+      sendMessage("Starting colour detection");
       msg.request.input = "start detection";
 
       if (client.call(msg)) {
         if (msg.response.output == "Detection failed") {
-          ROS_INFO("Unknown detection error");
+          sendMessage("Unknown detection error");
         } else {
-          ROS_INFO("%s", msg.response.output.c_str());
+          sendMessage(msg.response.output);
         }
       } else {
-        ROS_ERROR("Failed to contact camera_node");
+        sendMessage("Failed to contact camera_node");
       }
       break;
 
     default:
       valid = false;
-      ROS_INFO("Bad command");
-
+      sendMessage("Bad command");
   }
   if (valid) uartSendPacket(&commandPacket);
 }
@@ -307,17 +316,12 @@ void *worker(void *conn) {
   int len;
   char buffer[BUF_LEN];
   while(networkActive) {
-    /* TODO: Implement SSL read into buffer */
-
     len = sslRead(tls_conn, buffer, sizeof(buffer));
-    /* END TODO */
     // As long as we are getting data, network is active
     networkActive=(len > 0);
-
     if (len > 0) handleNetworkData(conn, buffer, len);
     else if(len < 0) perror("ERROR READING NETWORK: ");
   }
-
   // Reset tls_conn to NULL.
   tls_conn = NULL;
   EXIT_THREAD(conn);
@@ -331,7 +335,7 @@ void sendHello() {
   uartSendPacket(&helloPacket);
 }
 
-int main() {
+int main(int argc, char **argv) {
   // Start the uartReceiveThread. The network thread is started by
   // createServer
 
@@ -340,23 +344,27 @@ int main() {
   printf("Opening Serial Port\n");
   // Open the serial port
   startSerial(PORT_NAME, BAUD_RATE, 8, 'N', 1, 5);
-  printf("Done. Waiting 3 seconds for Arduino to reboot\n");
+  printf("DONE. Waiting 3 seconds for Arduino to reboot\n");
   sleep(3);
   printf("DONE. Starting Serial Listener\n");
   pthread_create(&serThread, NULL, uartReceiveThread, NULL);
-  printf("Starting Alex Server\n");
-
+  
+  printf("DONE. Starting Alex Server\n");
   networkActive = 1;
-
-  /* TODO: Call createServer with the necessary parameters to do client authentication and to send
-     Alex's certificate. Use the #define names you defined earlier  */
-
-  /* TODO END */
-
+  createServer(KEY_FNAME, CERT_FNAME, SERVER_PORT, &worker, CA_CERT_FNAME,
+      CLIENT_NAME, 1);
+  printf("Server up. Starting ROS\n");
+  ros::init(argc, argv, "main_node");
+  ros::start();
+  ros::Rate loop_rate(10);
   printf("DONE. Sending HELLO to Arduino\n");
   sendHello();
   printf("DONE.\n");
 
   // Loop while the server is active
-  while(server_is_running() && ros::ok());
+  while (server_is_running() && ros::ok()) {
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
+  return 0;
 }
