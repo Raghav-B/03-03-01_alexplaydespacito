@@ -216,7 +216,7 @@ void *writerThread(void *conn)
 /* TODO: #define filenames for the client private key, certificatea,
    CA filename, etc. that you need to create a client */
 
-#define SERVER_NAME "192.168.86.103"
+#define SERVER_NAME "172.31.35.244"
 #define CA_CERT_FNAME "signing.pem"
 #define PORT_NUM 5000
 #define CLIENT_CERT_FNAME "laptop.crt"
