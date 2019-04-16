@@ -20,9 +20,9 @@
 
 // TLS Port Number
 #define SERVER_PORT			5000
-#define KEY_FNAME "alex.key"
-#define CERT_FNAME "alex.crt"
-#define CA_CERT_FNAME "signing.pem"
+#define KEY_FNAME "/home/pi/Desktop/pi_workspace/src/03-03-01_alexplaydespacito/alex_main_pkg/src/main_node/alex.key"
+#define CERT_FNAME "/home/pi/Desktop/pi_workspace/src/03-03-01_alexplaydespacito/alex_main_pkg/src/main_node/alex.crt"
+#define CA_CERT_FNAME "/home/pi/Desktop/pi_workspace/src/03-03-01_alexplaydespacito/alex_main_pkg/src/main_node/signing.pem"
 #define CLIENT_NAME "laptop.play.despacito"
 
 // Our network buffer consists of 1 byte of packet type, and 128 bytes of data
