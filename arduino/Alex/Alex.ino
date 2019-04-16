@@ -253,17 +253,15 @@ void setupMotors()
    *    A2IN - Pin 6, PD6, OC0A LR
    *    B1IN - Pin 10, PB2, OC1B RR
    *    B2In - pIN 11, PB3, OC2A RF
-   
+  */ 
   // Set those  pins to be output
-  DDRD |= 0b01100000; // PD5 and PD6
-  DDRB |= 0b00001100; // PB2 and PB3
+  //DDRD |= 0b01100000; // PD5 and PD6
+  //DDRB |= 0b00001100; // PB2 and PB3
 
-  TCCR0A = 0b10100001; // Connect OC0A and OC0B
-  TCCR1A = 0b00100001; // Connect OC1B
-  TCCR2A = 0b10000001; // Connect OC2A
-  */
-
-  
+  //TCCR0A = 0b10100001; // Connect OC0A and OC0B
+  //TCCR1A = 0b00100001; // Connect OC1B
+  //TCCR2A = 0b10000001; // Connect OC2A
+   
 }
 
 // Start the PWM for Alex's motors.
@@ -271,8 +269,8 @@ void setupMotors()
 // blank.
 void startMotors() {
   
-  //TCNT0 = TCNT1 = TCNT2 = 0; // Initialize each counter 
-  //TCCR0B = TCCR1B = TCCR2B = 0b1; // Prescaler = 1
+  //TCNT1 = 0;TCNT2 = 0; // Initialize each counter 
+  //TCCR1B = 1;TCCR2B = 1; // Prescaler = 1
 }
 
 //overriding the analogWrite
