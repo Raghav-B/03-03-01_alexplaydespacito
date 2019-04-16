@@ -1,6 +1,7 @@
 #include <serialize.h>
 #include "constants.h"
 #include "stdint.h"
+#include <avr/wdt.h>
 #include "packet.h"
 
 typedef enum {
@@ -45,6 +46,9 @@ volatile unsigned long newDist;
 // Variables for ultrasonic sensor
 long frontDuration, frontDistance, backDuration, backDistance;
 bool ultrasonicSafety = true;
+bool rst = false;
+
+void(* resetFunc) (void) = 0;
 
 TResult readPacket(TPacket *packet)
 {
@@ -57,7 +61,12 @@ TResult readPacket(TPacket *packet)
       return deserialize(buffer, len, packet); 
 }
 
-volatile float ratio = 0.73;
+volatile float ratio = 0.75;
+
+void watchdog() {
+  wdt_enable(WDTO_15MS);
+  while(1);
+}
 
 void sendStatus()
 {
@@ -87,11 +96,13 @@ void sendMessage(const char *message)
 }
 
 void sendBadPacket()
-{
+{ 
+  
   TPacket badPacket;
   badPacket.packetType = PACKET_TYPE_ERROR;
   badPacket.command = RESP_BAD_PACKET;
   sendResponse(&badPacket);
+   rst = true;
 }
 
 void sendBadChecksum()
@@ -99,7 +110,8 @@ void sendBadChecksum()
   TPacket badChecksum;
   badChecksum.packetType = PACKET_TYPE_ERROR;
   badChecksum.command = RESP_BAD_CHECKSUM;
-  sendResponse(&badChecksum);  
+  sendResponse(&badChecksum);
+  rst = true;
 }
 
 void sendBadCommand()
@@ -237,20 +249,44 @@ void writeSerial(const char *buffer, int len)
 void setupMotors()
 {
   /* Our motor set up is:  
-   *    A1IN - Pin 5, PD5, OC0B
-   *    A2IN - Pin 6, PD6, OC0A
-   *    B1IN - Pin 10, PB2, OC1B
-   *    B2In - pIN 11, PB3, OC2A
-   */
+   *    A1IN - Pin 5, PD5, OC0B LF
+   *    A2IN - Pin 6, PD6, OC0A LR
+   *    B1IN - Pin 10, PB2, OC1B RR
+   *    B2In - pIN 11, PB3, OC2A RF
+   
+  // Set those  pins to be output
+  DDRD |= 0b01100000; // PD5 and PD6
+  DDRB |= 0b00001100; // PB2 and PB3
+
+  TCCR0A = 0b10100001; // Connect OC0A and OC0B
+  TCCR1A = 0b00100001; // Connect OC1B
+  TCCR2A = 0b10000001; // Connect OC2A
+  */
+
+  
 }
 
 // Start the PWM for Alex's motors.
 // We will implement this later. For now it is
 // blank.
-void startMotors()
-{
+void startMotors() {
   
+  //TCNT0 = TCNT1 = TCNT2 = 0; // Initialize each counter 
+  //TCCR0B = TCCR1B = TCCR2B = 0b1; // Prescaler = 1
 }
+
+//overriding the analogWrite
+/*void analogWrite(int num, int val) {
+  switch (num) {
+    case RF: OCR2A = val; break;
+    case RR: OCR1B = val; break;
+    case LF: OCR0B = val; break;
+    case LR: OCR0A = val; break;
+
+  }
+}*/
+
+
 
 // Convert percentages to PWM values
 int pwmVal(float speed)
@@ -305,7 +341,7 @@ void left(float ang, float speed)
   deltaTicks = degreesToTicks(ang);
   targetTicks = leftReverseTicksTurns + deltaTicks;
   analogWrite(LR, val);
-  analogWrite(RF, val*0.77);
+  analogWrite(RF, val*0.9);
   analogWrite(LF, 0);
   analogWrite(RR, 0);
 }
@@ -583,7 +619,7 @@ void checkDistance() {
     DDRB &= B011111; // DECLARE PIN 13 AS INPUT RIGHT ECHO
     frontDuration = pulseIn(13, HIGH);
     frontDistance = (frontDuration * 0.0343) / 2;
-    if ( frontDistance < 10 ) {
+    if (frontDistance < 7) {
       stop();
       sendMessage("Obstacle detected in front!");
     }
@@ -609,14 +645,15 @@ void loop() {
   
   if(result == PACKET_OK)
     handlePacket(&recvPacket);
-  else
+  else {
+   // resetFunc();
     if(result == PACKET_BAD){
       sendBadPacket();
     }
     else if(result == PACKET_CHECKSUM_BAD){
         sendBadChecksum();
     } 
-  
+  }
   //Serial.println(ratio);
   if (deltaDist > 0) {
     if (dir == FORWARD) {
@@ -663,7 +700,10 @@ void loop() {
   }
 
   if (dir == FORWARD || dir == BACKWARD) {
-    if (ultrasoniceSafety) checkDistance();
+    if (ultrasonicSafety) checkDistance();
   }
+
+  if (rst) watchdog();
+
   
 }
