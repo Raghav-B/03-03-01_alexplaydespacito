@@ -164,9 +164,9 @@ add_executable(listener src/debug/listener.cpp)
 target_link_libraries(listener ${catkin_LIBRARIES})
 add_dependencies(listener alex_main_pkg_generate_messages_cpp)
 
-add_executable(cli src/command_line/cli.cpp)
-target_link_libraries(cli ${catkin_LIBRARIES})
-add_dependencies(cli alex_main_pkg_generate_messages_cpp)
+#add_executable(cli src/command_line/cli.cpp)
+#target_link_libraries(cli ${catkin_LIBRARIES})
+#add_dependencies(cli alex_main_pkg_generate_messages_cpp)
 
 add_executable(main_node src/main_node/main_node.cpp)
 target_link_libraries(main_node ${catkin_LIBRARIES})

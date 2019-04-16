@@ -8,11 +8,11 @@
 
 // red hsv values
 cv::Scalar lower_red = cv::Scalar(170, 140, 140);
-cv::Scalar higher_red = cv::Scalar(180, 180, 220);
+cv::Scalar higher_red = cv::Scalar(180, 190, 220);
 
 // green hsv values
-cv::Scalar lower_green = cv::Scalar(40, 70, 100);
-cv::Scalar higher_green = cv::Scalar(70, 140, 170);
+cv::Scalar lower_green = cv::Scalar(30, 100, 50);
+cv::Scalar higher_green = cv::Scalar(70, 200, 150);
 
 // area has to greater than the threshold to be detected 
 long area_threshold = 5000;
@@ -74,7 +74,7 @@ bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Resp
             cv::drawContours(frame, contours, largest_contour_red_index, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
             red_found = true;
             m_red = cv::moments(contours[largest_contour_red_index], false);
-            c_red = cv::Point2f( m_red.m10/m.m00 , m_red.m01/m.m00 );
+            c_red = cv::Point2f( m_red.m10/m_red.m00 , m_red.m01/m_red.m00 );
         }
     }
 
@@ -111,7 +111,7 @@ bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Resp
             cv::drawContours(frame, contours, largest_contour_green_index, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
             green_found = true;
             m_green = cv::moments(contours[largest_contour_green_index], false);
-            c_green = cv::Point2f( m_green.m10/m.m00 , m_green.m01/m.m00 );
+            c_green = cv::Point2f( m_green.m10/m_green.m00 , m_green.m01/m_green.m00 );
         }
     }
 
@@ -146,7 +146,7 @@ bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Resp
             // check for green position
             if (c_green.x > left_bar) {
                 green_msg += "Green on left. ";
-            } else if (c.x > right_bar) {
+            } else if (c_green.x > right_bar) {
                 green_msg += "Green on middle. ";
             } else {
                 green_msg += "Green on right. ";
