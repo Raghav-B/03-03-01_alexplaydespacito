@@ -18,6 +18,10 @@
 /* TODO: #define constants for the  filenames for Alex's private key, certificate, CA certificate name,
         and the Common Name for your laptop */
 
+#define KEY_FNAME "test.key"
+#define CERT_FNAME "test.crt"
+#define CA_CERT_FNAME "signing.pem"
+#define CLIENT_NAME "laptop.play.despacito"
 
 /* END TODO */
 
@@ -195,6 +199,7 @@ void sendNetworkData(const char *data, int len)
               handleNetworkData should already have set tls_conn to point to the TLS
               connection we want to write to. */
 
+            c = sslWrite(tls_conn, data, len);
             /* END TODO */
 
         }
@@ -297,6 +302,7 @@ void *worker(void *conn)
 	{
 		/* TODO: Implement SSL read into buffer */
 
+        len = sslRead(conn, buffer, BUF_LEN);
 
 		/* END TODO */
 		// As long as we are getting data, network is active
@@ -344,10 +350,11 @@ int main()
 
     printf("Starting Alex Server\n");
 
-    networkActive = 1;
-
     /* TODO: Call createServer with the necessary parameters to do client authentication and to send
         Alex's certificate. Use the #define names you defined earlier  */
+
+    networkActive = 1;
+    createServer(KEY_FNAME, CERT_FNAME, SERVER_PORT, &worker, CA_CERT_FNAME, CLIENT_NAME, 1);
 
     /* TODO END */
 
