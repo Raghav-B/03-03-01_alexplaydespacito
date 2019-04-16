@@ -216,9 +216,7 @@ void *writerThread(void *conn)
 /* TODO: #define filenames for the client private key, certificatea,
    CA filename, etc. that you need to create a client */
 
-#define SERVER_NAME "172.31.35.244"
 #define CA_CERT_FNAME "signing.pem"
-#define PORT_NUM 5000
 #define CLIENT_CERT_FNAME "laptop.crt"
 #define CLIENT_KEY_FNAME "laptop.key"
 #define SERVER_NAME_ON_CERT "test.play.despacito"
@@ -227,7 +225,7 @@ void *writerThread(void *conn)
 void connectToServer(const char *serverName, int portNum)
 {
     /* TODO: Create a new client */
-		createClient(SERVER_NAME, PORT_NUM, 1, CA_CERT_FNAME, SERVER_NAME_ON_CERT, 1, CLIENT_CERT_FNAME, CLIENT_KEY_FNAME, readerThread, writerThread);
+		createClient(serverName, portNum, 1, CA_CERT_FNAME, SERVER_NAME_ON_CERT, 1, CLIENT_CERT_FNAME, CLIENT_KEY_FNAME, readerThread, writerThread);
     /* END TODO */
 }
 
