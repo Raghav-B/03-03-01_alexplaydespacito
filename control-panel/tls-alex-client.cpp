@@ -6,15 +6,16 @@
 
 // Packet types, error codes, etc.
 #include "../arduino/Alex/constants.h"
-/* TODO: #define filenames for the client private key, certificatea,
-   CA filename, etc. that you need to create a client */
+#include <string>
+#include <sstream>
+#include <iostream>
+#include <stdint.h>
+#include <stdio.h>
 
 #define CA_CERT_FNAME "signing.pem"
 #define CLIENT_CERT_FNAME "laptop.crt"
 #define CLIENT_KEY_FNAME "laptop.key"
 #define SERVER_NAME_ON_CERT "alex.play.despacito"
-
-/* END TODO */
 
 // Tells us that the network is running.
 static volatile int networkActive=0;
@@ -194,7 +195,7 @@ void *writerThread(void *conn) {
     if (input == "") continue;
     if (!parseCommand(input, buffer[1], params[0], params[1])) {
       printf("Invalid command.\n");
-    } else if (command == 'Q') {
+    } else if (buffer[1] == 'Q') {
       quit = true;
     } else {
       memcpy(&buffer[2], params, sizeof(params));
