@@ -1,5 +1,3 @@
-
-
 #include <serialize.h>
 #include "constants.h"
 #include "stdint.h"
@@ -251,20 +249,44 @@ void writeSerial(const char *buffer, int len)
 void setupMotors()
 {
   /* Our motor set up is:  
-   *    A1IN - Pin 5, PD5, OC0B
-   *    A2IN - Pin 6, PD6, OC0A
-   *    B1IN - Pin 10, PB2, OC1B
-   *    B2In - pIN 11, PB3, OC2A
-   */
+   *    A1IN - Pin 5, PD5, OC0B LF
+   *    A2IN - Pin 6, PD6, OC0A LR
+   *    B1IN - Pin 10, PB2, OC1B RR
+   *    B2In - pIN 11, PB3, OC2A RF
+   
+  // Set those  pins to be output
+  DDRD |= 0b01100000; // PD5 and PD6
+  DDRB |= 0b00001100; // PB2 and PB3
+
+  TCCR0A = 0b10100001; // Connect OC0A and OC0B
+  TCCR1A = 0b00100001; // Connect OC1B
+  TCCR2A = 0b10000001; // Connect OC2A
+  */
+
+  
 }
 
 // Start the PWM for Alex's motors.
 // We will implement this later. For now it is
 // blank.
-void startMotors()
-{
+void startMotors() {
   
+  //TCNT0 = TCNT1 = TCNT2 = 0; // Initialize each counter 
+  //TCCR0B = TCCR1B = TCCR2B = 0b1; // Prescaler = 1
 }
+
+//overriding the analogWrite
+/*void analogWrite(int num, int val) {
+  switch (num) {
+    case RF: OCR2A = val; break;
+    case RR: OCR1B = val; break;
+    case LF: OCR0B = val; break;
+    case LR: OCR0A = val; break;
+
+  }
+}*/
+
+
 
 // Convert percentages to PWM values
 int pwmVal(float speed)
