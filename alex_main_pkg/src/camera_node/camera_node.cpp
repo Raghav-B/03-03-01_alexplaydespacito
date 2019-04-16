@@ -8,11 +8,11 @@
 
 // red hsv values
 cv::Scalar lower_red = cv::Scalar(170, 140, 140);
-cv::Scalar higher_red = cv::Scalar(180, 180, 220);
+cv::Scalar higher_red = cv::Scalar(180, 190, 220);
 
 // green hsv values
-cv::Scalar lower_green = cv::Scalar(40, 70, 100);
-cv::Scalar higher_green = cv::Scalar(70, 140, 170);
+cv::Scalar lower_green = cv::Scalar(30, 100, 50);
+cv::Scalar higher_green = cv::Scalar(70, 200, 150);
 
 // area has to greater than the threshold to be detected 
 long area_threshold = 10000;
