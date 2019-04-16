@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(alex_main_pkg)
 add_compile_options(-std=c++11)
+#add_compile_options(-pthread)
+#add_compile_options(-lssl)
+#add_compile_options(-lcrypto)
+
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -21,6 +25,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+#find_package(Boost REQUIRED COMPONENTS system)
+find_package(OpenSSL REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -37,6 +43,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## * Let MSG_DEP_SET be the set of packages whose message types you use in
 ##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
 ## * In the file package.xml:
+
 ##   * add a build_depend tag for "message_generation"
 ##   * add a build_depend and a exec_depend tag for each package in MSG_DEP_SET
 ##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
@@ -124,7 +131,11 @@ catkin_package(
 include_directories(
   include 
   include ${catkin_INCLUDE_DIRS}
+  #/usr/include/openssl
+  
 )
+
+include_directories(${OPENSSL_INCLUDE_DIR})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -156,6 +167,9 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
+
+#target_link_libraries(openssl ${OPENSSL_LIBRARIES})
+
 add_executable(talker src/debug/talker.cpp)
 target_link_libraries(talker ${catkin_LIBRARIES})
 add_dependencies(talker alex_main_pkg_generate_messages_cpp)
@@ -164,23 +178,44 @@ add_executable(listener src/debug/listener.cpp)
 target_link_libraries(listener ${catkin_LIBRARIES})
 add_dependencies(listener alex_main_pkg_generate_messages_cpp)
 
-add_executable(cli src/command_line/cli.cpp)
-target_link_libraries(cli ${catkin_LIBRARIES})
-add_dependencies(cli alex_main_pkg_generate_messages_cpp)
+#add_executable(cli src/command_line/cli.cpp)
+#target_link_libraries(cli ${catkin_LIBRARIES})
+#add_dependencies(cli alex_main_pkg_generate_messages_cpp)
+
+#add_library(tls_server_lib src/main_node/tls_server_lib.cpp)
+#target_link_libraries(main_node tls_server_lib)
+
+#add_library(tls_pthread src/main_node/tls_pthread.cpp)
+#target_link_libraries(main_node tls_pthread)
+
+#add_library(tls_common_lib src/main_node/tls_common_lib.cpp)
+#target_link_libraries(main_node tls_common_lib)
+
+add_library(tls_lib 
+src/main_node/tls_server_lib.cpp
+src/main_node/tls_pthread.cpp
+src/main_node/tls_common_lib.cpp
+)
+
+target_link_libraries(tls_lib -pthread -lssl -lcrypto)
+
+add_library(make_tls_server src/main_node/make_tls_server.cpp)
+target_link_libraries(make_tls_server tls_lib)
 
 add_executable(main_node src/main_node/main_node.cpp)
+target_link_libraries(main_node make_tls_server)
 target_link_libraries(main_node ${catkin_LIBRARIES})
 add_dependencies(main_node alex_main_pkg_generate_messages_cpp)
+
+add_library(serial src/main_node/serial.cpp)
+target_link_libraries(main_node serial)
+
+add_library(serialize src/main_node/serialize.cpp)
+target_link_libraries(main_node serialize)
 
 add_executable(camera_node src/camera_node/camera_node.cpp)
 target_link_libraries(camera_node ${catkin_LIBRARIES})
 add_dependencies(camera_node alex_main_pkg_generate_messages_cpp)
-
-add_library(serial src/main_node/serial.cpp)
-add_library(serialize src/main_node/serialize.cpp)
-target_link_libraries(main_node serial)
-target_link_libraries(main_node serialize)
-
 
 #############
 ## Install ##

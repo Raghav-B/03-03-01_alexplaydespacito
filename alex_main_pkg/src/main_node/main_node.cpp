@@ -87,9 +87,9 @@ void handleStatus(TPacket *packet) {
 
 void handleResponse(TPacket *packet) {
   // The response code is stored in command
+  char resp[2];
   switch(packet->command) {
-    case RESP_OK:
-      char resp[2];
+    case RESP_OK:  
       printf("Command OK\n");
       resp[0] = NET_ERROR_PACKET;
       resp[1] = RESP_OK;
@@ -98,7 +98,6 @@ void handleResponse(TPacket *packet) {
 
     case RESP_SAFETY_ON:
     case RESP_SAFETY_OFF:
-      char resp[2];
       printf("Safety toggled\n");
       resp[0] = NET_ERROR_PACKET;
       resp[1] = packet->command;
@@ -213,6 +212,10 @@ void handleCommand(void *conn, const char *buffer) {
   commandPacket.params[1] = cmdParam[1];
   printf("COMMAND RECEIVED: %c %lu %lu\n", cmd, (unsigned long) cmdParam[0], (unsigned long) cmdParam[1]);
 
+  ros::NodeHandle camera_command_handle;
+  ros::ServiceClient client = camera_command_handle.serviceClient<alex_main_pkg::camera>("take_photo");
+  alex_main_pkg::camera msg;
+
   switch(cmd) {
     case 'W':
       sendMessage("Moving forward");
@@ -275,9 +278,9 @@ void handleCommand(void *conn, const char *buffer) {
       break;
 
     case 'P':
-      ros::NodeHandle camera_command_handle;
-      ros::ServiceClient client = camera_command_handle.serviceClient<alex_main_pkg::camera>("take_photo");
-      alex_main_pkg::camera msg;
+      //ros::NodeHandle camera_command_handle;
+      //ros::ServiceClient client = camera_command_handle.serviceClient<alex_main_pkg::camera>("take_photo");
+      //alex_main_pkg::camera msg;
       sendMessage("Starting colour detection");
       msg.request.input = "start detection";
 

@@ -40,8 +40,9 @@ bool parseCommand (const std::string &input, char &command, uint32_t &distance,
   detoken >> temp;
   if (temp.size() != 1) return false;
   command = toupper(temp[0]); //extract first character and capitalise
-  for (auto &c : validCmds) {
-    if (command == c) {
+  int cmdCount = sizeof(validCmds)/sizeof(char);
+  for (int i = 0; i < cmdCount; ++i) {
+    if (command == validCmds[i]) {
       isValid = true;
       break;
     }

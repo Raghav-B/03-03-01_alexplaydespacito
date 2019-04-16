@@ -49,12 +49,31 @@ Visualization Manager:
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: false
-      Enabled: true
+      Enabled: false
       Name: Map
-      Topic: /map
+      Topic: /maps
       Unreliable: false
       Use Timestamp: false
       Value: true
+    - Class: rviz/LaserScan
+      Name: LaserScan
+      Enabled: true
+      Topic: /scan
+      Unreliable: false
+      Selectable: false
+      Style: Boxes
+      Size (m): 0.05
+      Alpha: 1
+      Decay Time: 0
+      Position Transformer: XYZ
+      Color Transformer: Intensity
+      Queue Size: 10
+      Channel Name: intensity
+      Use rainbow: true
+      Invert Rainbow: false
+      Autocompute Intensity Bounds: true
+      Min Intensity: 47
+      Max Intensity: 47
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.100000001
