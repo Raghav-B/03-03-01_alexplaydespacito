@@ -15,8 +15,8 @@ cv::Scalar lower_green = cv::Scalar(40, 70, 100);
 cv::Scalar higher_green = cv::Scalar(70, 140, 170);
 
 // area has to greater than the threshold to be detected 
-long area_threshold = 5000;
-long area_max_threshold = 10000;
+long area_threshold = 10000;
+long area_max_threshold = 50000;
 
 bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Response &res) {
     std::system("raspistill -o photo.jpg");
@@ -71,10 +71,9 @@ bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Resp
         // draw the largest contour if the contour area is greater than threshold
         if (largest_area_red > area_threshold) {
             cv::Scalar color = cv::Scalar(0, 255, 0);
-            cv::drawContours(frame, contours, largest_contour_red_index, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
             red_found = true;
             m_red = cv::moments(contours[largest_contour_red_index], false);
-            c_red = cv::Point2f( m_red.m10/m.m00 , m_red.m01/m.m00 );
+            c_red = cv::Point2f( m_red.m10/m_red.m00 , m_red.m01/m_red.m00 );
         }
     }
 
@@ -108,10 +107,9 @@ bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Resp
         // draw the largest contour if the contour area is greater than threshold
         if (largest_area_green > area_threshold) {
             cv::Scalar color = cv::Scalar(0, 255, 0);
-            cv::drawContours(frame, contours, largest_contour_green_index, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
             green_found = true;
             m_green = cv::moments(contours[largest_contour_green_index], false);
-            c_green = cv::Point2f( m_green.m10/m.m00 , m_green.m01/m.m00 );
+            c_green = cv::Point2f( m_green.m10/m_green.m00 , m_green.m01/m_green.m00 );
         }
     }
 
@@ -146,7 +144,7 @@ bool take_photo(alex_main_pkg::camera::Request &req, alex_main_pkg::camera::Resp
             // check for green position
             if (c_green.x > left_bar) {
                 green_msg += "Green on left. ";
-            } else if (c.x > right_bar) {
+            } else if (c_green.x > right_bar) {
                 green_msg += "Green on middle. ";
             } else {
                 green_msg += "Green on right. ";
