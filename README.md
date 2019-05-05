@@ -1,4 +1,17 @@
-# alexplaydespacito
+# Alex - A Pi-based search and rescue robot
+![Alex](https://i.imgur.com/UZ2aHil.jpg)
+
+## Capabilities:
+  - Remote control over network using Robot Operating System
+  - Localization and mapping using the SLAM algorithm on a LIDAR
+    ![SLAM](https://i.imgur.com/kXkEpvn.jpg)
+  - Colour detection using the PiCamera running OpenCV
+    ![OpenCV](https://i.imgur.com/FifSkZs.jpg)
+  - Active collision prevention using ultrasonic sensors
+    ![CollisionPrevention](https://i.imgur.com/OEpP4FR.jpg)
+
+## System Architecture:
+ - ![SystemArchitecture](https://i.imgur.com/VGUc62g.jpg?1)
 
 ## Setting up everything
   - **Creating catkin workspace**                      
