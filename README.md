@@ -11,7 +11,7 @@
     ![CollisionPrevention](https://i.imgur.com/OEpP4FR.jpg)
 
 ## System Architecture:
- - ![SystemArchitecture](https://i.imgur.com/VGUc62g.jpg?1)
+![SystemArchitecture](https://i.imgur.com/VGUc62g.jpg?1)
 
 ## Setting up everything
   - **Creating catkin workspace**                      
